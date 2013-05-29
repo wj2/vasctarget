@@ -1,19 +1,21 @@
-import numpy as np, dsplib as dsp
+#!/usr/bin/python
+
+import numpy as np, dsp.dsplib as dsp
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 from scipy import ndimage
+from scipy import misc
+from scipy.signal import argrelmax
 
 # replace this section with a few lines
-import vastifarr as va
+import vasc.vastifarr as va
 
-# path = '/Users/MacbookAir/Dropbox/Blanche_Lab/vasculature/Sample data/Z-Stack_PRE-000'
-# path = '/Users/MacbookAir/Desktop/ZSeries-02132013-20X-pre-001'
-path = '../../ZSeries-02132013-20X-pre-001'
+from config import path
 
 a = va.tiffile(path)
 tiflist = a.gettiflist(path)
 tiflist2, xml = a.get_tiffs_and_xml(tiflist)
-tiflist2 = tiflist2[50:75]
+# tiflist2 = tiflist2[50:75]
 nfiles = a.listsize(tiflist2)
 array3d = a.initarray(nfiles)
 tif3darray = a.tif2array(path,tiflist2,array3d)
@@ -31,7 +33,7 @@ def mousemove(event):
         plt.xlim(0,512)
         # subplot(122)
         # plt.title('damage=%1d'%np.min(damage[:,event.xdata,event.ydata]))
-        print('damage=%1d'%np.min(damage[:,event.xdata,event.ydata]))
+        print('damage=%1d'%np.min(damage[:,event.ydata,event.xdata]))
         plt.draw()
 
 def micron2pix(probsize):       # conversion from microns to pixels - remove hardcoding, get from Prairie XML metadata file
@@ -68,64 +70,6 @@ def build_histogram(probesizemicron, theta = [0]):
         damage2d[i] = ndimage.convolve(meanvasdam,k)
     return damage2d
 
-# def count_vessels(probesizemicron, theta = [0]):
-#     # algorithm pseudocode:
-#     # rotate whole *image* not probe #
-#     # slice rotated image to generate line profiles 
-#     # low pass filter line profiles to remove noise
-#     # find peaks of line profile (local maxima)
-#     # discard peaks below ~500 lum. units 
-#     # count the number of peaks --> number of crossed vessels at that location
-#     # no need to adjust discard theshold with depth
-#     # repeat above for all substacks in the whole imaging volume
-#     # p.s. tested on 50um substacks
-#     
-#     # make mask of probe cross-section
-#     probesizepix = micron2pix(probesizemicron)
-#     l = max(probesizepix)
-#     # k = np.zeros((l,l))    
-#     # k[l/2] = 1 # horizontal probe
-#     damage2d = np.zeros((len(theta),512,512))
-#     for i, t in enumerate(theta):
-#         print('%s degrees'', all translations...'%t)
-#         rotvas = ndimage.rotate(meanvasdam,t,reshape=False)
-#         for y in xrange(0,rotvas.shape[0]): # add step here...
-#             for x in xrange(0,rotvas.shape[1]-l): # add step here...
-#                 profl = dsp.smoothg(rotvas[y,x:x+l],10) # smoothed profile for this location
-#                 profl[profl<250] = 0 # discard small peaks
-#                 damage2d[i,y,x] = sum(dsp.islocmax(profl)) # count peaks --> vessels
-#     return damage2d
-def count_vessels(probesizemicron, theta = [0]):
-    # algorithm pseudocode:
-    # rotate whole *image* not probe #
-    # slice rotated image to generate line profiles 
-    # low pass filter line profiles to remove noise
-    # find peaks of line profile (local maxima)
-    # discard peaks below ~500 lum. units 
-    # count the number of peaks --> number of crossed vessels at that location
-    # no need to adjust discard theshold with depth
-    # repeat above for all substacks in the whole imaging volume
-    # p.s. tested on 50um substacks
-    
-    # make mask of probe cross-section
-    # make mask of probe cross-section
-    probesizepix = micron2pix(probesizemicron)
-    l = max(probesizepix)
-    k = np.zeros((l,l))    
-    k[l/2] = 1 # horizontal probe
-    damage2d = np.zeros((len(theta),meanvasdam.shape[0],meanvasdam.shape[1]))
-    for i, t in enumerate(theta):
-        print('%s degrees'', all translations...'%t)
-        k = ndimage.rotate(k,t,reshape=False)
-        for y in xrange(0,20):#meanvasdam.shape[0]): # add step here...
-            for x in xrange(0,400):#meanvasdam.shape[1]-l): # add step here...
-                a=k*meanvasdam[y:y+l,x:x+l]
-                b=a[a.nonzero()]
-                # profl = dsp.smoothg(b,10) # smoothed profile for this location
-                # profl[profl<250] = 0 # discard small peaks
-                damage2d[i,y,x] = sum(dsp.islocmax(b)) # count peaks --> vessels
-    return damage2d
-
 def subz_from_3dtiff(tiffs, slicesize):
     slices = xrange(0, tiffs.shape[0], slicesize)
     holder = np.ones((len(slices), tiffs.shape[1], 
@@ -160,28 +104,34 @@ def count_vessels(probesizemicron, theta = [0]):
     l = max(probesizepix)
     k = np.zeros((l,l))    
     k[l/2] = 1 # horizontal probe
-    print k.shape, k
     damage2d = np.zeros((len(theta),meanvasdam.shape[0],
                          meanvasdam.shape[1]))
     for lnum,layer in enumerate(subzstack):
+        print 'layer '+str(lnum+1)+' of '+str(subzstack.shape[0])
+        layer = dsp.normalize(layer)
         for i, t in enumerate(theta): 
             print('%s degrees'', all translations...'%t)
             # TODO : find better rotate function
-            rotated = ndimage.rotate(k,t,reshape=False)
+            # rotated = ndimage.rotate(k,t,reshape=False)
+            rotated = misc.imrotate(k, t, interp='nearest')
             # get rid of rotation artifacts
-            rotated[rotated < .001] = 0
-            print 'probe', rotated.shape, rotated
+            rotated[rotated < rotated.max()] = 0
+            rotated[rotated == rotated.max()] = 1
             # for y in xrange(layer.shape[0]+l): # add step here...
             for y in xrange(layer.shape[0]/2-100, layer.shape[0]/2+100): # add step here...
                 # for x in xrange(layer.shape[1]-l): # add step here...
                 for x in xrange(layer.shape[1]/2-100, layer.shape[1]/2+100): # add step here...
-                    print lnum, x, y
+                    # print lnum, x, y
                     a=rotated*layer[y:y+l,x:x+l]
                     b=a.T[a.T.nonzero()]
+                    # luminance est of collision
+                    if b.mean() > 0:
+                        damage2d[i,y,x] += 1
                     profl = dsp.smoothg(b,10) # smoothed profile for this location
-                    print profl.shape
-                    profl[profl<50] = 0 # discard small peaks
-                    damage2d[i,y,x] += sum(dsp.islocmax(profl)) # count peaks --> vessels
+                    profl[profl < -0.9] = 0 # discard small peaks
+                    
+                    # damage2d[i,y,x] += sum(dsp.islocmax(profl)) # count peaks --> vessels
+                    damage2d[i,y,x] += argrelmax(profl, order=2)[0].size # count peaks --> vessels
     return damage2d
             
 
