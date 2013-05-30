@@ -1,0 +1,14 @@
+#!/usr/bin/python
+
+import sys, argparse
+
+# add micron parameter for finding best location within
+# plot enhanced contrast subzstacks
+# compare to luminance, subtract
+# plot dynamic line profile
+
+# for param:
+# thickness of collapse
+
+parser = argparse.ArgumentParser(description='provide targetting for probe insertion')
+parser.add_argument('--path', dest='path'
