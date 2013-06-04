@@ -22,7 +22,7 @@ class tiffile:
             name,ext = os.path.splitext(infile)
             if ext == '.xml':
                 xml = infile
-            elif ext != '.tif':
+            elif ext != '.tif' or 'Ch1' not in ext:
                 tiflist.remove(infile)
 
         for idx,infile in enumerate(tiflist):# WHY???

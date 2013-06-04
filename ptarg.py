@@ -17,7 +17,7 @@ a = va.tiffile(path)
 tiflist = a.gettiflist(path)
 tiflist2, xml = a.get_tiffs_and_xml(tiflist)
 scales = a.get_scale(xml)
-tiflist2 = tiflist2[50:75]
+# tiflist2 = tiflist2[50:75]
 nfiles = a.listsize(tiflist2)
 array3d = a.initarray(nfiles)
 tif3darray = a.tif2array(path,tiflist2,array3d)
@@ -27,6 +27,37 @@ regionSize = 50.0
 
 meanvasdam = np.mean(tif3darray,axis=0)
 
+cross = (40, 10)
+def mouseclick(event):
+    if event.inaxes == ax1:
+        xdat = event.xdata * downsample
+        ydat = event.ydata * downsample
+        outfig = plt.figure()
+        ax = outfig.add_subplot(111)
+        axim = ax.imshow(subz[0], 'gray', interpolation='none')
+        cross1 = plt.imshow(np.ones((cross[1], cross[0])), 
+                           extent=[0,0,0,0])
+        cross2 = plt.imshow(np.ones((cross[0], cross[1])),
+                           extent=[0,0,0,0])
+        extent1 = [xdat, xdat + cross[0],
+                   ydat + cross[0]/2 - cross[1]/2, 
+                   ydat + cross[0]/2 + cross[1]/2]
+        extent2 = [xdat + cross[0]/2 - cross[1]/2,
+                   xdat + cross[0]/2 + cross[1]/2,
+                   ydat, ydat + cross[0]]
+        cross1.set_extent(extent1)
+        cross2.set_extent(extent2)
+        ax.set_ylim(subz[0].shape[0], 0)
+        ax.set_xlim(0, subz[0].shape[1])
+        # ax2im.set_data(subz[0])
+        # plt.draw()
+        # extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        # fig.savefig('out.pdf', bbox_inches=extent, format='pdf')
+        outfig.savefig('out.pdf', format='pdf')
+        print 'pdf saved'
+    elif event.inaxes == ax2:
+        pass
+
 def mousemove(event):
     # plot best orientation at a given location
     if event.inaxes == ax1 or event.inaxes == ax2:
@@ -35,12 +66,12 @@ def mousemove(event):
             xdat = event.xdata - kxy/(2*downsample)
             ydat = event.ydata - kxy/(2*downsample)
     
-            i = np.argmin(damage[:,ydat, 
-                                   xdat])
-            dam = np.min(damage[:,ydat,xdat])
-            extent = [xdat * downsample, (xdat * downsample) + kxy, 
-                      ydat * downsample, (ydat * downsample) + kxy]
-            linep = lineprof[0, i, ydat, xdat]
+            i = np.argmin(damage[:,event.ydata, 
+                                   event.xdata])
+            dam = np.min(damage[:,event.ydata,event.xdata])
+            extent = [event.xdata * downsample, (event.xdata * downsample) + kxy, 
+                      event.ydata * downsample, (event.ydata * downsample) + kxy]
+            linep = lineprof[0, i, event.ydata, event.xdata]
         elif event.inaxes == ax2:
             xdat = event.xdata - kxy/2
             ydat = event.ydata - kxy/2
@@ -118,6 +149,7 @@ def subz_from_3dtiff(tiffs, slicesize):
                       tiffs.shape[2]))
     i = 0
     while i < len(slices):
+        print str(i*slicesize) +' to '+ str(i*slicesize+slicesize)
         holder[i] = np.mean(tiffs[i*slicesize:i*slicesize + slicesize], 
                             axis=0)
         i += 1
@@ -188,17 +220,18 @@ def count_vessels(probesizemicron, theta = [0]):
                     xs += 1
                 ys += 1
 
-    return damage2d, lineprofiles
+    return damage2d, lineprofiles, subzstack
 
 ori = np.array([0,30,60,90,120,150])
-damage, lineprof = count_vessels(probesize, ori)
+damage, lineprof, subz = count_vessels(probesize, ori)
 lumdam = build_histogram(probesize, ori)
 probe = build_kernel(probesize, ori)
 kxy = probe.shape[1]
 
 # plot vascular pattern with optimal locations overlaid
 fig = plt.figure(figsize=(10,6))
-fig.canvas.mpl_connect('motion_notify_event',mousemove)
+fig.canvas.mpl_connect('motion_notify_event', mousemove)
+fig.canvas.mpl_connect('button_press_event', mouseclick)
 
 # find best points in each region
 yregions = int(np.ceil(damage.shape[1] / regionSize))
@@ -250,7 +283,7 @@ ax1.set_title('Vascular damage at best orientation')
 
 # plot the interactive GUI
 ax2 = plt.subplot(222)
-ax2.imshow(meanvasdam,'gray',interpolation='none')
+ax2im = ax2.imshow(meanvasdam,'gray',interpolation='none')
 
 # plot probe
 img = plt.imshow(probe[0], extent = [0,0,0,0], alpha = 0.5)
