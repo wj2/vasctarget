@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from scipy import ndimage
 from scipy import misc
 from scipy.signal import argrelmax
+from random import choice
 
 # replace this section with a few lines
 import vasc.vastifarr as va
@@ -15,30 +16,51 @@ from config import path, probesize
 a = va.tiffile(path)
 tiflist = a.gettiflist(path)
 tiflist2, xml = a.get_tiffs_and_xml(tiflist)
+scales = a.get_scale(xml)
 tiflist2 = tiflist2[50:75]
 nfiles = a.listsize(tiflist2)
 array3d = a.initarray(nfiles)
 tif3darray = a.tif2array(path,tiflist2,array3d)
 ###########################################
 
+regionSize = 50.0
+
 meanvasdam = np.mean(tif3darray,axis=0)
 
 def mousemove(event):
     # plot best orientation at a given location
     if event.inaxes == ax1 or event.inaxes == ax2:
-        i = np.argmin(damage[:,event.ydata,event.xdata])
+        
+        if event.inaxes == ax1:
+            xdat = event.xdata - kxy/(2*downsample)
+            ydat = event.ydata - kxy/(2*downsample)
+    
+            i = np.argmin(damage[:,ydat, 
+                                   xdat])
+            dam = np.min(damage[:,ydat,xdat])
+            extent = [xdat * downsample, (xdat * downsample) + kxy, 
+                      ydat * downsample, (ydat * downsample) + kxy]
+            linep = lineprof[0, i, ydat, xdat]
+        elif event.inaxes == ax2:
+            xdat = event.xdata - kxy/2
+            ydat = event.ydata - kxy/2
+
+            i = np.argmin(damage[:,ydat / downsample, 
+                                   xdat / downsample])
+            dam = np.min(damage[:,ydat / downsample,
+                                  xdat / downsample])
+            extent = [xdat, xdat + kxy, 
+                      ydat, ydat + kxy]
+            linep = lineprof[0, i, ydat / downsample, xdat / downsample]
+
         img.set_data(probe[i])
-        extent = [event.xdata - kxy/2, 
-                  event.xdata + kxy/2, 
-                  event.ydata - kxy/2, 
-                  event.ydata + kxy/2]
         img.set_extent(extent)
-        ax2.set_ylim(512,0)
-        ax2.set_xlim(0,512)
-        print('damage=%1d'%np.min(damage[:,event.ydata,event.xdata]))
+        ax2.set_ylim(meanvasdam.shape[0],0)
+        ax2.set_xlim(0,meanvasdam.shape[1])
+        print('damage=%1d'%dam)
         
         ax3.clear()
-        ax3.plot(lineprof[0, i, event.ydata, event.xdata])
+        ax3.plot(linep)
 
         plt.draw()
     elif event.inaxes == ax4:
@@ -56,8 +78,11 @@ def mousemove(event):
         plt.draw()
 
 
-def micron2pix(probsize):       
+
+def micron2pix(probsize, reverse=False):       
     scales = a.get_scale(xml)
+    if reverse:
+        return (probsize[0] * scales[0], probsize[1] * scales[1])
     s = (1 / scales[0], 1 / scales[1])
     newprobsize = [int(probsize[0]*s[0]),int(probsize[1]*s[1])]
     return newprobsize
@@ -99,6 +124,8 @@ def subz_from_3dtiff(tiffs, slicesize):
     
     return holder
 
+# downsample factor
+downsample = 3
 def count_vessels(probesizemicron, theta = [0]):
     # algorithm pseudocode:
     # normalize image slice
@@ -122,40 +149,44 @@ def count_vessels(probesizemicron, theta = [0]):
     l = max(probesizepix)
     k = np.zeros((l,l))    
     k[l/2] = 1 # horizontal probe
-    damage2d = np.zeros((len(theta),meanvasdam.shape[0],
-                         meanvasdam.shape[1]))
-    lineprofiles = np.zeros((subzstack.shape[0], len(theta), meanvasdam.shape[0],
-                             meanvasdam.shape[1]), dtype=object)
+    damage2d = np.zeros((len(theta),
+                         ((subzstack.shape[1] - l) / downsample + 1),
+                         ((subzstack.shape[2] - l) / downsample + 1)))
+    lineprofiles = np.zeros((subzstack.shape[0], len(theta), 
+                             ((subzstack.shape[1] - l) / downsample + 1),
+                             ((subzstack.shape[1] - l) / downsample + 1)), dtype=object)
+    print damage2d.shape
     for lnum,layer in enumerate(subzstack):
         print 'layer '+str(lnum+1)+' of '+str(subzstack.shape[0])
         layer = dsp.normalize(layer)
         for i, t in enumerate(theta): 
             print('%s degrees'', all translations...'%t)
-            # TODO : find better rotate function
-            # rotated = ndimage.rotate(k,t,reshape=False)
             rotated = misc.imrotate(k, t, interp='nearest')
             # get rid of rotation artifacts
             rotated[rotated < rotated.max()] = 0
             rotated[rotated == rotated.max()] = 1
             # for y in xrange(layer.shape[0]+l): # add step here...
-            for y in xrange(layer.shape[0]/2-100, layer.shape[0]/2+100):
+            ys = 0
+            for y in xrange(0, layer.shape[0]-l, downsample):
+                xs = 0 
                 # for x in xrange(layer.shape[1]-l): # add step here...
-                for x in xrange(layer.shape[1]/2-100, layer.shape[1]/2+100): 
-                    # print lnum, x, y
+                for x in xrange(0, layer.shape[1]-l, downsample): 
                     a=rotated*layer[y:y+l,x:x+l]
                     b=a.T[a.T.nonzero()]
                     # luminance est of collision
                     if b.mean() > 0:
-                        damage2d[i,y,x] += 1
+                        damage2d[i,ys,xs] += 1
                     # profl = b
                     profl = dsp.smoothg(b,9) # smoothed profile for this location
                     profl[profl < thresh] = thresh # discard small peaks
                     
-                    lineprofiles[lnum, i, y, x] = profl
+                    lineprofiles[lnum, i, ys, xs] = profl
 
                     # count peaks --> vessels
                     # damage2d[i,y,x] += sum(dsp.islocmax(profl))
-                    damage2d[i,y,x] += argrelmax(profl, order=1)[0].size 
+                    damage2d[i,ys,xs] += argrelmax(profl, order=1)[0].size 
+                    xs += 1
+                ys += 1
 
     return damage2d, lineprofiles
 
@@ -169,6 +200,41 @@ kxy = probe.shape[1]
 fig = plt.figure(figsize=(10,6))
 fig.canvas.mpl_connect('motion_notify_event',mousemove)
 
+# find best points in each region
+yregions = int(np.ceil(damage.shape[1] / regionSize))
+xregions = int(np.ceil(damage.shape[2] / regionSize))
+print damage.shape, xregions, yregions
+
+best = {}
+for y in [y*regionSize for y in xrange(yregions)]:
+    for x in [x*regionSize for x in xrange(xregions)]:
+        print str(x) +' to '+str(x+regionSize)
+        print str(y) +' to '+str(y+regionSize)
+        region = damage[:, y:y+regionSize, x:x+regionSize]
+        rmin = region.min()
+        regionmin = np.where(region == rmin)
+        # get absolute index and convert to microns
+        ys = regionmin[1] + y; xs = regionmin[2] + x
+        i = choice(xrange(ys.size))
+        print xs[i], ys[i], region.min()
+        xm, ym = (xs[i] * downsample * scales[0], 
+                  ys[i] * downsample * scales[1])
+
+        theta = ori[regionmin[0][i]]
+
+        best[(x*downsample, y*downsample)] = (rmin, theta, xm, ym)
+        
+print 'best locations: '
+
+def pretty_best(dic):
+    for k in dic.keys():
+        print 'region  : '+str(k)
+        print 'damage  : '+str(dic[k][0])
+        print 'rotation: '+str(dic[k][1])
+        print 'locaton : '+str(dic[k][2:])
+
+pretty_best(best)
+                              
 # # plot the histogram of damage at all translations and rotations
 # plt.subplot(131)
 # plt.hist(damage.flatten(), bins = 50, alpha=0.25, label='probe size = '+str(probesz))
@@ -179,7 +245,7 @@ fig.canvas.mpl_connect('motion_notify_event',mousemove)
 # 
 # plot the estimated damage for the least damaging orientation
 ax1 = fig.add_subplot(221)
-ax1.imshow(damage.min(0))
+ax1.imshow(damage.min(0), interpolation='bicubic')
 ax1.set_title('Vascular damage at best orientation')
 
 # plot the interactive GUI

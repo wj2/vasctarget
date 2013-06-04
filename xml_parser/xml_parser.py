@@ -62,7 +62,7 @@ def getscale(xmlpath):
     xscale = float(soup.find('key',key="micronsPerPixel_XAxis")['value'])
     yscale = float(soup.find('key',key="micronsPerPixel_YAxis")['value'])
 
-    return [xscale, yscale]
+    return (xscale, yscale)
 
 		
 
