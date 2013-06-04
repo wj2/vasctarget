@@ -3,6 +3,7 @@
 import numpy as np, dsp.dsplib as dsp
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gspec
 from scipy import ndimage
 from scipy import misc
 from scipy.signal import argrelmax
@@ -17,7 +18,7 @@ a = va.tiffile(path)
 tiflist = a.gettiflist(path)
 tiflist2, xml = a.get_tiffs_and_xml(tiflist)
 scales = a.get_scale(xml)
-# tiflist2 = tiflist2[50:75]
+tiflist2 = tiflist2[50:75]
 nfiles = a.listsize(tiflist2)
 array3d = a.initarray(nfiles)
 tif3darray = a.tif2array(path,tiflist2,array3d)
@@ -57,7 +58,9 @@ def mouseclick(event):
         print 'pdf saved'
     elif event.inaxes == ax2:
         pass
-
+# 1 count and compare to compute (3 or 4 times)
+# 2 output, arrow key through best possible 
+# 3 compare where suggested with where she went
 def mousemove(event):
     # plot best orientation at a given location
     if event.inaxes == ax1 or event.inaxes == ax2:
@@ -276,6 +279,9 @@ pretty_best(best)
 # plt.title('Vascular damage vs. probesize: translation and rotation')
 # plt.legend()
 # 
+
+
+
 # plot the estimated damage for the least damaging orientation
 ax1 = fig.add_subplot(221)
 ax1.imshow(damage.min(0), interpolation='bicubic')
@@ -289,8 +295,13 @@ ax2im = ax2.imshow(meanvasdam,'gray',interpolation='none')
 img = plt.imshow(probe[0], extent = [0,0,0,0], alpha = 0.5)
 
 # plot dynamic timecourse
+# ax3 = fig.add_subplot(223)
+# ax3.plot([1,2,3,4,5])
+
+# plot histogram with slider
 ax3 = fig.add_subplot(223)
-ax3.plot([1,2,3,4,5])
+ax3.hist(damage.flatten())
+slide = plt.Slider(ax3, "", 0, 10)
 
 # plot luminance
 ax4 = fig.add_subplot(224)
