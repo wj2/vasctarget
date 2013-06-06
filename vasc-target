@@ -5,8 +5,6 @@ import read, proc, analysis, gui
 
 import numpy as np
 
-
-
 # add micron parameter for finding best location within
 # plot enhanced contrast subzstacks
 # compare to luminance, subtract
@@ -29,6 +27,7 @@ parser.add_argument('-t', '--z-thickness', help='designate thickness (in microns
                     default=50)
 parser.add_argument('-z', '--zone-size', help='size of zones for giving best-in-region'
                     '-results (default 50)', type=int, default=50)
+<<<<<<< HEAD
 parser.add_argument('-a', '--angles', help='number of angles to use (default 6, max 180)',
                     type=int, default=6)
 parser.add_argument('probesize', help='length (first) and thickness (second) of probe'
@@ -74,3 +73,16 @@ if not args.luminance_only:
 
 """ PRESENT """
 gfig = gui.make_gui(collstack, thetas, probesize, views, args)
+=======
+
+args = parser.parse_args()
+
+
+""" READ DATA """
+
+
+""" PROCESS """
+
+if args.L or args.l:
+    proc.luminance(
+>>>>>>> c03e7a10598274d7483ac09c4f8f8cf0bf8fc77b
