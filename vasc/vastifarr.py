@@ -52,6 +52,7 @@ class tiffile:
     def tif2array(self,path,tiflist,array3d):
         
         for idx,infile in enumerate(tiflist):
+            print infile
             im = Image.open(os.path.join(path,infile))
             A = list(im.getdata())
             tifarray = np.array(A,np.uint16).reshape(512,512)

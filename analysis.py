@@ -33,12 +33,12 @@ def line_profiles(stack, thetas, down, probesize):
     # create container for damage map
     damage = np.zeros((len(thetas), 
                        (stack.shape[1] - l) / down + 1,
-                       (stack.shape[1] - l) / down + 1))
+                       (stack.shape[2] - l) / down + 1))
     # container for individual line profiles
     lineprofiles = np.empty((stack.shape[0],
                              len(thetas), 
                              (stack.shape[1] - l) / down + 1,
-                             (stack.shape[1] - l) / down + 1), 
+                             (stack.shape[2] - l) / down + 1), 
                             dtype=object)
     
     # begin loop procedure

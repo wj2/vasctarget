@@ -29,7 +29,6 @@ def clean_rotate(probe, t, interp='nearest'):
     return rotated
 
 def normalize(arr): 
-    print arr.mean(), arr.std()
     return (arr - arr.mean()) / arr.std()
 
 def get_thetas(num):
