@@ -27,7 +27,6 @@ parser.add_argument('-t', '--z-thickness', help='designate thickness (in microns
                     default=50)
 parser.add_argument('-z', '--zone-size', help='size of zones for giving best-in-region'
                     '-results (default 50)', type=int, default=50)
-<<<<<<< HEAD
 parser.add_argument('-a', '--angles', help='number of angles to use (default 6, max 180)',
                     type=int, default=6)
 parser.add_argument('probesize', help='length (first) and thickness (second) of probe'
@@ -36,7 +35,7 @@ parser.add_argument('-d', '--downsample', help='number by which to downsample li
                     ' analysis (default 3)', type=int, default=3)
 
 args = parser.parse_args()
-print args
+
 """ VALIDATE """
 if args.angles > 180:
     sys.stderr.write('InputError: Given value for angles > 180')
@@ -51,6 +50,8 @@ info, stack = read.get_data(args.path)
 
 """ PROCESS """
 """ collapse """
+
+# typical probesize is 70 23
 collstack = proc.collapse_stack(stack, info['z_width'], args.z_thickness)
 thetas = proc.get_thetas(args.angles)
 avgmpp = (info['ympp'] + info['xmpp']) / 2
@@ -73,16 +74,3 @@ if not args.luminance_only:
 
 """ PRESENT """
 gfig = gui.make_gui(collstack, thetas, probesize, views, args)
-=======
-
-args = parser.parse_args()
-
-
-""" READ DATA """
-
-
-""" PROCESS """
-
-if args.L or args.l:
-    proc.luminance(
->>>>>>> c03e7a10598274d7483ac09c4f8f8cf0bf8fc77b

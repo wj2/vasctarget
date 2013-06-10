@@ -31,9 +31,9 @@ def make_gui(stack, thetas, probesize, views, args):
     
     # interaction functs, using closure!
     def slider_moved(newLoc):
-        print 'moved'
-        currindex = [0]
-        currloc[0] = int(round(newLoc, 0))
+        currloc[0] = int(np.floor(newLoc))
+        index = (newLoc - np.floor(newLoc)) * len(allLocs[currloc[0]])
+        currindex = [int(np.floor(index)) ]
         update_display()
 
     def key_modify(mod):
@@ -41,12 +41,16 @@ def make_gui(stack, thetas, probesize, views, args):
         print currloc, currindex, currsize, mod
         if currindex[0] + mod < 0 or currindex[0] + mod > currsize:
             currloc[0] += mod
-            currindex[0] = 0
-            if len(allLocs[currloc[0]][0]) < 0:
+            if mod > 0:
+                currindex[0] = 0
+            elif mod < 0:
+                currindex[0] = len(allLocs[currloc[0]][0]) - 1
+            if len(allLocs[currloc[0]][0]) < 1:
                 key_modify(mod)
         else:
             currindex[0] += mod
         print currloc, currindex, len(allLocs[currloc[0]])
+        sliderItem.val = currloc[0] + currindex[0] / len(allLocs[currloc[0]])
         update_display()
 
     def print_current():
@@ -96,7 +100,7 @@ def make_gui(stack, thetas, probesize, views, args):
         elif event.key == 'enter':
             print_current()
         elif event.key == 'escape':
-            quit_targetting()
+            plt.close(fig)
 
     meanvas = stack.mean(axis=0)
     dprobes = make_disp_probes(probesize, thetas)
@@ -123,13 +127,16 @@ def make_gui(stack, thetas, probesize, views, args):
     
     # histogram
     histoPlot = fig.add_subplot(gs[3:5, :])
-    histoDat = plt.hist(views['line'].flatten(), bins=len(allLocs))
+    # histoDat = plt.hist(views['line'].flatten(), bins=len(allLocs))
+    histoDat = plt.hist(views['line'].flatten(), 
+                        bins=xrange(int(views['line'].min()), 
+                                    int(views['line'].max() + 2)))
     
     # sliderbar
     sliderBar = fig.add_subplot(gs[5, :])
     sliderItem = Slider(sliderBar, '', 
-                        views['line'].min(), views['line'].max(),
-                        valinit=currloc[0])
+                        views['line'].min(), views['line'].max() + 1,
+                        valinit=currloc[0], closedmax=False)
     sliderItem.on_changed(slider_moved)
 
     # best location (maybe)
