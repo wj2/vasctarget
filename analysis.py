@@ -6,6 +6,7 @@ import numpy as np
 from proc import normalize, smoothg, clean_rotate
 from scipy.misc import imrotate
 from scipy.signal import argrelmax
+from scipy.ndimage import gaussian_filter
 
 
 def profile(section, probe, thresh=-0.9):
@@ -24,7 +25,7 @@ def profile(section, probe, thresh=-0.9):
     
     return dam, p
         
-def line_profiles(stack, thetas, down, probesize):
+def line_profiles(views, stack, thetas, down, gauss, probesize):
     # represent probe as single line
     l = probesize[0]
     probe = np.zeros((l, l))
@@ -40,7 +41,7 @@ def line_profiles(stack, thetas, down, probesize):
                              (stack.shape[1] - l) / down + 1,
                              (stack.shape[2] - l) / down + 1), 
                             dtype=object)
-    
+
     # begin loop procedure
     for lnum, layer in enumerate(stack):
         sys.stdout.write('layer '+str(lnum+1)+' of '+str(stack.shape[0])+'\n')
@@ -52,7 +53,7 @@ def line_profiles(stack, thetas, down, probesize):
             for y in xrange(0, layer.shape[0] - l + 1, down):
                 xs = 0
                 for x in xrange(0, layer.shape[1] - l + 1, down):
-                    # do line profile
+                    # djo line profile
                     dam, line = profile(layer[y:y+l, x:x+l],
                                         rotated)
                     damage[i, ys, xs] += dam
@@ -60,9 +61,14 @@ def line_profiles(stack, thetas, down, probesize):
                     xs += 1
                 ys += 1
 
-    return damage, lineprofiles
+    views['line'] = damage
+    views['lineprof'] = lineprofiles
+    if gauss:
+        smoothdamage = gaussian_filter(damage, 1)
+        views['linegauss'] = np.ceil(smoothdamage)
+    return views
 
-def luminance(stack, thetas, probesize):
+def luminance(views, stack, thetas, probesize):
     # construct probe representation
     probe = make_probe(probesize)
     # container for lumdamage
@@ -73,5 +79,6 @@ def luminance(stack, thetas, probesize):
             rotated = clean_rotate(probe, t, interp='nearest')
             damage[lnum, i] = ndimage.convolve(layer, rotated)
 
-    return damage.sum(axis=0)
+    views['luminance'] = damage.sum(axis=0)
+    return views
     

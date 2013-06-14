@@ -10,27 +10,21 @@ import numpy as np
 # compare to luminance, subtract
 # plot dynamic line profile
 
-# for param:
-# thickness of collapse
-
-parser = argparse.ArgumentParser(description='provide targetting for probe insertion')
+parser = argparse.ArgumentParser(description='provide targeting for probe insertion')
 parser.add_argument('path', help='path to your 2photon data')
-parser.add_argument('-g', '--no-gui', help='toggle gui off', action='store_true')
+parser.add_argument('probesize', help='length (first) and thickness (second) of probe'
+                    ' in microns', type=int, nargs=2)
+parser.add_argument('-g', '--gaussian', help='smooth line profiles with a gaussian '
+                    'filter (default on)', action='store_false')
 parser.add_argument('-l', '--luminance', help='use luminance measure (default off)',
                     action='store_true')
 parser.add_argument('-L', '--luminance-only', help='use ONLY luminance (default off)',
                     action='store_true')
-parser.add_argument('-p', '--plot', help='plot the line profiles (default off)',
-                    action='store_true')
 parser.add_argument('-t', '--z-thickness', help='designate thickness (in microns) '
                     'of z-collapse in the sub-z stack (default 50)', type=int, 
                     default=50)
-parser.add_argument('-z', '--zone-size', help='size of zones for giving best-in-region'
-                    '-results (default 50)', type=int, default=50)
 parser.add_argument('-a', '--angles', help='number of angles to use (default 6, max 180)',
                     type=int, default=6)
-parser.add_argument('probesize', help='length (first) and thickness (second) of probe'
-                    ' in microns', type=int, nargs=2)
 parser.add_argument('-d', '--downsample', help='number by which to downsample line profile'
                     ' analysis (default 3)', type=int, default=3)
 
@@ -63,14 +57,15 @@ views = {}
 """ luminance """
 if args.luminance_only or args.luminance:
     sys.stdout.write('luminance...')
-    views['luminance'] = analysis.luminance(collstack, thetas, 
-                                            probesize)
+    views = analysis.luminance(views, collstack, thetas, 
+                               probesize)
 """ line profiles """    
 if not args.luminance_only:
     sys.stdout.write('line profiles...\n')
-    views['line'], lineprofiles = analysis.line_profiles(collstack, thetas, 
-                                                         args.downsample,
-                                                         probesize)
+    views = analysis.line_profiles(views, collstack, thetas, 
+                                   args.downsample,
+                                   args.gaussian,
+                                   probesize)
 
 """ PRESENT """
 gfig = gui.make_gui(collstack, thetas, probesize, views, args)

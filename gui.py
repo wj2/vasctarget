@@ -15,8 +15,6 @@ def make_disp_probes(probesize, thetas):
 
 def get_all_locs(lines, down):
     locs = {}
-    print lines.min(), lines.max()
-    sys.stdout.write('constructing range...\n')
     for i in xrange(int(lines.min()), int(lines.max() + 1)):
         temp = np.where(lines == i)
         locs[i] = (temp[0], temp[1] * down, temp[2] * down)
@@ -25,8 +23,14 @@ def get_all_locs(lines, down):
 
 
 def make_gui(stack, thetas, probesize, views, args):
+    # find data to use
+    if 'linegauss' in views.keys():
+        dat = views['linegauss']
+    else:
+        dat = views['line']
+
     currindex = [0]
-    currloc = [int(views['line'].min())]
+    currloc = [int(dat.min())]
     down = args.downsample
     
     # interaction functs, using closure!
@@ -50,7 +54,6 @@ def make_gui(stack, thetas, probesize, views, args):
         else:
             currindex[0] += mod
         print currloc, currindex, len(allLocs[currloc[0]])
-        sliderItem.val = currloc[0] + currindex[0] / len(allLocs[currloc[0]])
         update_display()
 
     def print_current():
@@ -85,8 +88,17 @@ def make_gui(stack, thetas, probesize, views, args):
         pim.set_extent([info[2], info[2] + p.shape[1],
                         info[1], info[1] + p.shape[0]])
         meanvasMap.set_ylim(meanvas.shape[0], 0)
-        meanvasMap.set_xlim(0, meanvas.shape[1], 0)
+        meanvasMap.set_xlim(0, meanvas.shape[1])
 
+        dotim.set_extent([(info[2] / down) - (dot.shape[1] / 2), 
+                          (info[2] / down) + (dot.shape[1] / 2),
+                          (info[1] / down) - (dot.shape[0] / 2), 
+                          (info[1] / down) + (dot.shape[0] / 2)])
+
+        lpdamMap.set_ylim(dat.shape[1], 0)
+        lpdamMap.set_xlim(0, dat.shape[2])
+
+        sliderItem.val = currloc[0] + currindex[0] / len(allLocs[currloc[0]])
         sys.stdout.write('damage: '+str(currloc[0])+'\n')
 
         plt.draw()
@@ -106,7 +118,7 @@ def make_gui(stack, thetas, probesize, views, args):
     dprobes = make_disp_probes(probesize, thetas)
     
     # get histogram-rel data
-    allLocs = get_all_locs(views['line'], down)
+    allLocs = get_all_locs(dat, down)
 
     # set up figure
     fig = plt.figure(1)
@@ -114,10 +126,19 @@ def make_gui(stack, thetas, probesize, views, args):
 
     # create grid to hold all items
     gs = gspec.GridSpec(6, 6)
-    
+
     # line profile damage
+    lpmean = round(dat.mean(), 2)
+    lpstd = round(dat.std(), 2)
+    lpmin = dat.min()
+    lpmax = dat.max()
     lpdamMap = fig.add_subplot(gs[:3, :3])
-    lpdamMap.imshow(views['line'].min(axis=0), interpolation='none')
+    lpdamMap.set_title('mean: '+str(lpmean)+', std: '+str(lpstd)+
+                       ', range: ['+str(lpmin)+','+str(lpmax)+']')
+    lpdamMap.imshow(dat.min(axis=0), interpolation='none')
+    # create dot
+    dot = np.ones((5,5))
+    dotim = lpdamMap.imshow(dot, 'spring',  extent=[0,0,0,0])
 
     # mean vasculature
     meanvasMap = fig.add_subplot(gs[:3, 3:])
@@ -127,15 +148,14 @@ def make_gui(stack, thetas, probesize, views, args):
     
     # histogram
     histoPlot = fig.add_subplot(gs[3:5, :])
-    # histoDat = plt.hist(views['line'].flatten(), bins=len(allLocs))
-    histoDat = plt.hist(views['line'].flatten(), 
-                        bins=xrange(int(views['line'].min()), 
-                                    int(views['line'].max() + 2)))
+    histoDat = plt.hist(dat.flatten(), 
+                        bins=xrange(int(lpmin), 
+                                    int(lpmax + 2)))
     
     # sliderbar
     sliderBar = fig.add_subplot(gs[5, :])
     sliderItem = Slider(sliderBar, '', 
-                        views['line'].min(), views['line'].max() + 1,
+                        lpmin, lpmax + 1,
                         valinit=currloc[0], closedmax=False)
     sliderItem.on_changed(slider_moved)
 
