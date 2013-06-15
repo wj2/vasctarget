@@ -8,6 +8,7 @@ import matplotlib.gridspec as gspec
 
 from matplotlib.widgets import Slider
 from scipy.misc import imrotate
+from random import choice
 
 def make_disp_probes(probesize, thetas):
     probe = proc.make_probe(probesize)
@@ -21,6 +22,38 @@ def get_all_locs(lines, down):
 
     return locs
 
+def get_best_locs(lines, down, regionsize, ori):
+    regionsize = regionsize / down
+    yregions = int(np.ceil(lines.shape[1] / regionsize))
+    xregions = int(np.ceil(lines.shape[2] / regionsize))
+    best = {}
+    aos, axs, ays, mins = [], [], [], []
+    for y in [y*regionsize for y in xrange(yregions)]:
+        for x in [x*regionsize for x in xrange(xregions)]:
+            print y, y+regionsize, x, x+regionsize
+            region = lines[:, y:y+regionsize, x:x+regionsize]
+            rmin = region.min()
+            regionmin = np.where(region == rmin)
+            # get absolute index 
+            ys = (regionmin[1] + y) * down; xs = (regionmin[2] + x) * down
+            i = choice(xrange(ys.size))
+            if rmin in best.keys():
+                print rmin, ys[i], xs[i]
+                pr = best[rmin]
+                pr[0].append(regionmin[0][i])
+                pr[1].append(ys[i]); pr[2].append(xs[i])
+
+            else:
+                best[rmin] = ([regionmin[0][i]],
+                               [ys[i]], [xs[i]])
+    return best
+
+def next_loc(curr, locs, mod):
+    curr += mod
+    while curr not in locs.keys():
+        curr += mod
+        print curr
+    return curr
 
 def make_gui(stack, thetas, probesize, views, args):
     # find data to use
@@ -29,31 +62,41 @@ def make_gui(stack, thetas, probesize, views, args):
     else:
         dat = views['line']
 
-    currindex = [0]
-    currloc = [int(dat.min())]
     down = args.downsample
     
     # interaction functs, using closure!
     def slider_moved(newLoc):
         currloc[0] = int(np.floor(newLoc))
-        index = (newLoc - np.floor(newLoc)) * len(allLocs[currloc[0]])
+        index = (newLoc - np.floor(newLoc)) * len(locs[currloc[0]])
         currindex = [int(np.floor(index)) ]
-        update_display()
+        update_display(True)
 
     def key_modify(mod):
-        currsize = len(allLocs[currloc[0]][0])
+        currsize = len(locs[currloc[0]][0])
+        locmax = max(locs)
+        locmin = min(locs)
         print currloc, currindex, currsize, mod
-        if currindex[0] + mod < 0 or currindex[0] + mod > currsize:
-            currloc[0] += mod
-            if mod > 0:
-                currindex[0] = 0
-            elif mod < 0:
-                currindex[0] = len(allLocs[currloc[0]][0]) - 1
-            if len(allLocs[currloc[0]][0]) < 1:
-                key_modify(mod)
+        if currindex[0] + mod < 0:
+            if currloc[0] + mod < locmin:
+                currloc[0] = locmax
+            else:
+                print 'called next_loc'
+                print currloc[0]
+                currloc[0] = next_loc(currloc[0], locs, mod)
+                print currloc[0]
+            currindex[0] = len(locs[currloc[0]][0]) - 1
+        elif currindex[0] + mod > currsize - 1:
+            if currloc[0] + mod > locmax:
+                currloc[0] = locmin
+            else:
+                print 'called next_loc'
+                print currloc[0]
+                currloc[0] = next_loc(currloc[0], locs, mod)
+                print currloc[0]
+            currindex[0] = 0
         else:
             currindex[0] += mod
-        print currloc, currindex, len(allLocs[currloc[0]])
+        print currloc, currindex, len(locs[currloc[0]])
         update_display()
 
     def print_current():
@@ -75,14 +118,14 @@ def make_gui(stack, thetas, probesize, views, args):
         plt.figure(1)
 
     def get_curr_info():
-        choice = allLocs[currloc[0]]
+        choice = locs[currloc[0]]
         info = (choice[0][currindex[0]], choice[1][currindex[0]], 
                 choice[2][currindex[0]])
         probe = dprobes[info[0]]
 
         return info, probe
 
-    def update_display():
+    def update_display(fromSliderMove=False):
         info, p = get_curr_info()
         pim.set_data(p)
         pim.set_extent([info[2], info[2] + p.shape[1],
@@ -98,8 +141,11 @@ def make_gui(stack, thetas, probesize, views, args):
         lpdamMap.set_ylim(dat.shape[1], 0)
         lpdamMap.set_xlim(0, dat.shape[2])
 
-        sliderItem.val = currloc[0] + currindex[0] / len(allLocs[currloc[0]])
-        sys.stdout.write('damage: '+str(currloc[0])+'\n')
+        if not fromSliderMove:
+            # sliderItem.set_val(currloc[0] + currindex[0] 
+            #                    / len(locs[currloc[0]]))
+            pass
+        meanvasMap.set_title('damage: '+str(currloc[0]))
 
         plt.draw()
 
@@ -117,8 +163,14 @@ def make_gui(stack, thetas, probesize, views, args):
     meanvas = stack.mean(axis=0)
     dprobes = make_disp_probes(probesize, thetas)
     
-    # get histogram-rel data
-    allLocs = get_all_locs(dat, down)
+    # get location data
+    if args.best_in_region:
+        locs = get_best_locs(dat, down, args.regionsize, thetas)
+    else:
+        locs = get_all_locs(dat, down)
+
+    currindex = [0]
+    currloc = [int(min(locs.keys()))]
 
     # set up figure
     fig = plt.figure(1)

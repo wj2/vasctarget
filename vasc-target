@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys, argparse, os
+sys.path.append('/Library/Python/2.6/site-packages/')
 import read, proc, analysis, gui
 
 import numpy as np
@@ -27,6 +28,11 @@ parser.add_argument('-a', '--angles', help='number of angles to use (default 6, 
                     type=int, default=6)
 parser.add_argument('-d', '--downsample', help='number by which to downsample line profile'
                     ' analysis (default 3)', type=int, default=3)
+parser.add_argument('-s', '--regionsize', help='size of region for best options marks '
+                    '(default 50)', type=int, default=50)
+parser.add_argument('-b', '--best-in-region', help='toggle best-in-region results rather '
+                    'than all results (default on)', action='store_false')
+
 
 args = parser.parse_args()
 

@@ -9,19 +9,21 @@ from scipy.signal import argrelmax
 from scipy.ndimage import gaussian_filter
 
 
-def profile(section, probe, thresh=-0.9):
+def profile(section, probe, thresh=-0.5):
     dam = 0
     p = probe * section
     p = p.T[p.T.nonzero()]
     # if avg luminance is high (eg, on a vessel)
-    if p.mean() > 0: 
+    pmean = p.mean()
+    if pmean > 0.5: 
         dam += 1
+        p[p > 1.5] = 1
     
     p = smoothg(p, 9) # smooth 
     p[p < thresh] = thresh # elim small peaks
 
     # find number of peaks (ie, local maxima)
-    dam += argrelmax(p, order=1)[0].size
+    dam += argrelmax(p, order=2)[0].size
     
     return dam, p
         

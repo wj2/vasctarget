@@ -1,10 +1,11 @@
 
-import os, Image
+import os
 
 import numpy as np
 import BeautifulSoup as bs
 
 from scipy.misc import imread
+from PIL import Image
 
 
 def find_tifs_and_xml(path, channel='Ch1'):
