@@ -211,6 +211,7 @@ def make_targeting_gui(stack, thetas, probesize, views, args):
     plt.draw()
     plt.show()
     plt.ioff()
+
     
 def make_damage_gui(postack, psize):
 
@@ -255,14 +256,19 @@ def make_damage_gui(postack, psize):
 
     def update_display():
 
+        print postack.shape
+        print postack[i[0]].shape
+        print p.shape
         vasIm.set_data(postack[i[0]])
-        
+        print locs[i[0]]
+        print coord_to_extent(locs[i[0]])
         pim.set_data(proc.clean_rotate(p, rots[i[0]]))
         pim.set_extent(coord_to_extent(locs[i[0]]))
         vasMap.set_ylim(postack[i[0]].shape[0], 0)
         vasMap.set_xlim(0, postack[i[0]].shape[1])
-
         vasMap.set_title('locked: '+str(locked[0])+' (toggle with l)')
+
+        plt.draw()
 
     def mouse_click(event):
         probe_abs_move((event.ydata, event.xdata))
@@ -281,37 +287,40 @@ def make_damage_gui(postack, psize):
             probe_rel_rotate(-1)
         elif event.key == 'e' or event.key == 'E':
             probe_rel_rotate(1)
-        elif event.key == 'shift+up':
+        elif event.key == 'ctrl+up':
             subz_rel_change(-1)
-        elif event.key == 'shift+down':
+        elif event.key == 'ctrl+down':
             subz_rel_change(1)
         elif event.key == 'l' or event.key == 'L':
             locked[0] = not locked[0]
+            # update_display()
         
     # if locked, then all layers move together
     locked = [True]
+    # display top level initially
+    i = [0]
+
+    # initial probe location and rotation on each level
+    locs = np.ones((postack.shape[0], 2))
+    rots = np.zeros((postack.shape[0]))
+
+    # create probe
+    p = proc.make_probe(psize)
 
     # set up figure
     fig = plt.figure(1)
     fig.canvas.mpl_connect('key_press_event', key_press)
     fig.canvas.mpl_connect('button_press_event', mouse_click)
 
-    # display top level initially
-    i = [0]
-
     # main display
     vasMap = fig.add_subplot(111)
     vasIm = vasMap.imshow(postack[i[0]], 'gray', interpolation='none')
     
     # probe display
-    p = proc.make_probe(psize)
     pim = vasMap.imshow(p, extent=[0,0,0,0])
 
-    # initial probe location
-    locs = np.ones((postack.shape[0], 2))
-    rots = np.zeros((postack.shape[0]))
-    
-    plt.draw()
+    # make it so!
+    update_display()
     plt.show()
     plt.ioff()
 

@@ -4,7 +4,7 @@ also developing the capability to provide an assessment
 of damage to vasculature caused by probe insertion.
 
 Requirements:
-    python, numpy, scipy (0.11.0 or greater)
+    python, numpy, scipy (0.11.0 or greater), matplotlib
 
 Use:
 
