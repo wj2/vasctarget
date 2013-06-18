@@ -98,3 +98,5 @@ def luminance(views, stack, thetas, probesize):
     views['luminance'] = damage.sum(axis=0)
     return views
     
+def damage_profiles(stack, locs, rots, inter, n):
+    

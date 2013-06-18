@@ -46,4 +46,10 @@ probesize = (int(np.ceil(args.probesize[0] / avgmpp)),
 sys.stdout.write('making gui...\n')
 locs, rots = gui.make_damage_gui(postack, probesize)
 
+""" ANALYZE """
+precount = analysis.damage_profiles(prestack, locs, rots, args.interval, 
+                                    args.n_profiles)
+postcount = analysis.damage_profiles(postack, locs, rots, args.interval, 
+                                    args.n_profiles)
+
 print locs, rots

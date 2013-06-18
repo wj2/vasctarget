@@ -3,6 +3,18 @@ import numpy as np
 
 from scipy.misc import imrotate
 
+def rect_mask(l, w):
+    mask = np.zeros((w, l))
+    mask[0] = 1; mask[-1] = 1
+    mask[:, 0] = 1; mask[:, -1] = 1
+    
+    return mask
+
+def collapse_rect_mask(mask):
+    return np.hstack((mask[0,1:-1], mask[:, -1], 
+                      mask[-1, :-1][::-1], 
+                      mask[:-1, 0][::-1]))
+
 def make_probe(psize):
     l = psize[0]; w = psize[1]
     probe = np.zeros((l, l))

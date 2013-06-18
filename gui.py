@@ -181,6 +181,7 @@ def make_targeting_gui(stack, thetas, probesize, views, args):
     lpdamMap.set_title('mean: '+str(lpmean)+', std: '+str(lpstd)+
                        ', range: ['+str(lpmin)+','+str(lpmax)+']')
     lpdamMap.imshow(dat.min(axis=0), interpolation='none')
+    
     # create dot
     dot = np.ones((5,5))
     dotim = lpdamMap.imshow(dot, 'spring',  extent=[0,0,0,0])
@@ -264,9 +265,10 @@ def make_damage_gui(postack, psize):
         print coord_to_extent(locs[i[0]])
         pim.set_data(proc.clean_rotate(p, rots[i[0]]))
         pim.set_extent(coord_to_extent(locs[i[0]]))
-        vasMap.set_ylim(postack[i[0]].shape[0], 0)
-        vasMap.set_xlim(0, postack[i[0]].shape[1])
-        vasMap.set_title('locked: '+str(locked[0])+' (toggle with l)')
+        y = vasMap.set_ylim(postack[i[0]].shape[0], 0)
+        x = vasMap.set_xlim(0, postack[i[0]].shape[1])
+        print y,x
+        vasMap.set_title('locked: '+str(locked[0])+' (toggle with r)')
 
         plt.draw()
 
@@ -291,9 +293,11 @@ def make_damage_gui(postack, psize):
             subz_rel_change(-1)
         elif event.key == 'ctrl+down':
             subz_rel_change(1)
-        elif event.key == 'l' or event.key == 'L':
+        elif event.key == 'r' or event.key == 'R':
             locked[0] = not locked[0]
-            # update_display()
+            update_display()
+        elif event.key == 'enter':
+            plt.close(fig)
         
     # if locked, then all layers move together
     locked = [True]
