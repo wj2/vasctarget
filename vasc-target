@@ -65,6 +65,7 @@ if args.luminance_only or args.luminance:
     sys.stdout.write('luminance...')
     views = analysis.luminance(views, collstack, thetas, 
                                probesize)
+    
 """ line profiles """    
 if not args.luminance_only:
     sys.stdout.write('line profiles...\n')
@@ -73,5 +74,8 @@ if not args.luminance_only:
                                    args.gaussian,
                                    probesize)
 
+    analysis.print_misc_stats(args.path, views, 'line')
+    analysis.print_misc_stats(args.path, views, 'linegauss')
+
 """ PRESENT """
-gfig = gui.make_gui(collstack, thetas, probesize, views, args)
+gfig = gui.make_targeting_gui(collstack, thetas, probesize, views, args)

@@ -52,10 +52,9 @@ def next_loc(curr, locs, mod):
     curr += mod
     while curr not in locs.keys():
         curr += mod
-        print curr
     return curr
 
-def make_gui(stack, thetas, probesize, views, args):
+def make_targeting_gui(stack, thetas, probesize, views, args):
     # find data to use
     if 'linegauss' in views.keys():
         dat = views['linegauss']
@@ -64,7 +63,7 @@ def make_gui(stack, thetas, probesize, views, args):
 
     down = args.downsample
     
-    # interaction functs, using closure!
+    # interaction functs!
     def slider_moved(newLoc):
         currloc[0] = int(np.floor(newLoc))
         index = (newLoc - np.floor(newLoc)) * len(locs[currloc[0]])
@@ -80,19 +79,13 @@ def make_gui(stack, thetas, probesize, views, args):
             if currloc[0] + mod < locmin:
                 currloc[0] = locmax
             else:
-                print 'called next_loc'
-                print currloc[0]
                 currloc[0] = next_loc(currloc[0], locs, mod)
-                print currloc[0]
             currindex[0] = len(locs[currloc[0]][0]) - 1
         elif currindex[0] + mod > currsize - 1:
             if currloc[0] + mod > locmax:
                 currloc[0] = locmin
             else:
-                print 'called next_loc'
-                print currloc[0]
                 currloc[0] = next_loc(currloc[0], locs, mod)
-                print currloc[0]
             currindex[0] = 0
         else:
             currindex[0] += mod
@@ -219,4 +212,107 @@ def make_gui(stack, thetas, probesize, views, args):
     plt.show()
     plt.ioff()
     
+def make_damage_gui(postack, psize):
+
+    def probe_abs_move(loc):
+        if locked[0]:
+            locs[:] = np.array(loc)
+        else:
+            locs[i[0]] = np.array(loc)
         
+        update_display()
+
+    def probe_rel_move(trans):
+        new = locs[i[0]] + trans
+        if (new[0] >= 0 and new[0] < postack[i[0]].shape[0]
+            and new[1] >= 0 and new[1] < postack[i[0]].shape[1]):
+            if locked[0]:
+                locs[:] += trans
+            else:
+                locs[i[0]] += trans
+
+        update_display()
+
+    def probe_rel_rotate(direc):
+        if locked[0]:
+            rots[:] += direc
+        else:
+            rots[i[0]] += direc
+        
+        update_display()
+
+    def subz_rel_change(direc):
+        if i[0] + direc < postack.shape[0] and i[0] + direc >= 0:
+            i[0] += direc
+
+        update_display()
+
+    def coord_to_extent(yx):
+        return [yx[1] - (p.shape[1] / 2),
+                yx[1] + (p.shape[1] / 2),
+                yx[0] - (p.shape[0] / 2),
+                yx[0] + (p.shape[0] / 2)]
+
+    def update_display():
+
+        vasIm.set_data(postack[i[0]])
+        
+        pim.set_data(proc.clean_rotate(p, rots[i[0]]))
+        pim.set_extent(coord_to_extent(locs[i[0]]))
+        vasMap.set_ylim(postack[i[0]].shape[0], 0)
+        vasMap.set_xlim(0, postack[i[0]].shape[1])
+
+        vasMap.set_title('locked: '+str(locked[0])+' (toggle with l)')
+
+    def mouse_click(event):
+        probe_abs_move((event.ydata, event.xdata))
+
+    def key_press(event):
+        print event.key
+        if event.key == 'left':
+            probe_rel_move(np.array([0, -1]))
+        elif event.key == 'right':
+            probe_rel_move(np.array([0, 1]))
+        elif event.key == 'up':
+            probe_rel_move(np.array([-1, 0]))
+        elif event.key == 'down':
+            probe_rel_move(np.array([1, 0]))
+        elif event.key == 'q' or event.key == 'Q':
+            probe_rel_rotate(-1)
+        elif event.key == 'e' or event.key == 'E':
+            probe_rel_rotate(1)
+        elif event.key == 'shift+up':
+            subz_rel_change(-1)
+        elif event.key == 'shift+down':
+            subz_rel_change(1)
+        elif event.key == 'l' or event.key == 'L':
+            locked[0] = not locked[0]
+        
+    # if locked, then all layers move together
+    locked = [True]
+
+    # set up figure
+    fig = plt.figure(1)
+    fig.canvas.mpl_connect('key_press_event', key_press)
+    fig.canvas.mpl_connect('button_press_event', mouse_click)
+
+    # display top level initially
+    i = [0]
+
+    # main display
+    vasMap = fig.add_subplot(111)
+    vasIm = vasMap.imshow(postack[i[0]], 'gray', interpolation='none')
+    
+    # probe display
+    p = proc.make_probe(psize)
+    pim = vasMap.imshow(p, extent=[0,0,0,0])
+
+    # initial probe location
+    locs = np.ones((postack.shape[0], 2))
+    rots = np.zeros((postack.shape[0]))
+    
+    plt.draw()
+    plt.show()
+    plt.ioff()
+
+    return locs, rots

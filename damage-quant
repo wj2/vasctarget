@@ -1,0 +1,49 @@
+#!/usr/bin/python
+
+import sys, argparse, os
+sys.path.append('/Library/Python/2.6/site-packages/')
+import read, proc, analysis, gui
+
+import numpy as np
+
+parser = argparse.ArgumentParser(description='provide quantification of damage '
+                                 'between pre and post datasets')
+parser.add_argument('pre', help='path to your 2photon *pre* data')
+parser.add_argument('post', help='path to your 2photon *post* data')
+parser.add_argument('probesize', help='length (first) and thickness (second) of probe'
+                    ' in microns', type=int, nargs=2)
+parser.add_argument('-i', '--interval', help='number of microns between line profiles '
+                    ' (default 50)', type=int, default=50)
+parser.add_argument('-n', '--n-profiles', help='number of profiles (default 3)',
+                    type=int, default=3)
+parser.add_argument('-t', '--z-thickness', help='designate thickness (in microns) '
+                    'of z-collapse in the sub-z stack (default 50)', type=int, 
+                    default=50)
+args = parser.parse_args()
+
+""" VALIDATE """
+if not os.path.isdir(args.pre):
+    sys.stderr.write('InputError: pre given does not exist or is not dir')
+    sys.exit(1)
+if not os.path.isdir(args.post):
+    sys.stderr.write('InputError: post given does not exist or is not dir')
+    sys.exit(1)
+
+
+""" READ DATA """
+sys.stdout.write('reading pre...\n')
+preinfo, prestack = read.get_data(args.pre)
+sys.stdout.write('reading post...\n')
+postinfo, postack = read.get_data(args.post)
+
+postack = proc.collapse_stack(postack, postinfo['z_width'], args.z_thickness)
+prestack = proc.collapse_stack(prestack, preinfo['z_width'], args.z_thickness)
+avgmpp = (postinfo['ympp'] + postinfo['xmpp']) / 2
+probesize = (int(np.ceil(args.probesize[0] / avgmpp)), 
+             int(np.ceil(args.probesize[1] / avgmpp)))
+
+""" ELICIT INPUT """
+sys.stdout.write('making gui...\n')
+locs, rots = gui.make_damage_gui(postack, args.probesize)
+
+print locs, rots

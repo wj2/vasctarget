@@ -1,5 +1,5 @@
 
-import sys
+import sys, csv
 
 import numpy as np
 
@@ -7,7 +7,21 @@ from proc import normalize, smoothg, clean_rotate
 from scipy.misc import imrotate
 from scipy.signal import argrelmax
 from scipy.ndimage import gaussian_filter
+from scipy.stats.mstats import kurtosis
+from scipy.stats import skew
 
+def print_misc_stats(path, alldata, key): 
+    name = path.replace('/', '-').replace('.','l') + '_' + key + '_stats'
+    want = [np.mean, np.median, np.min, np.max, skew, kurtosis]
+    names, results = [], []
+    for x in want:
+        names.append(x.__name__)
+        results.append(x(alldata[key], axis=None))
+        
+    with open(name+'.csv', 'wb') as cf:
+        writ = csv.writer(cf)
+        writ.writerow(names)
+        writ.writerow(results)
 
 def profile(section, probe, thresh=-0.5):
     dam = 0
