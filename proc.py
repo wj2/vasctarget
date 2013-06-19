@@ -2,6 +2,7 @@
 import numpy as np
 
 from scipy.misc import imrotate
+from scipy.ndimage.interpolation import rotate
 
 def rect_mask(l, w):
     mask = np.zeros((w, l))
@@ -10,10 +11,35 @@ def rect_mask(l, w):
     
     return mask
 
+def create_masks(psize, inter, n):
+    masks = [rect_mask(psize[0], 1)]
+    for i in xrange(n):
+        add = i * inter
+        masks.append(rect_mask(psize[0] + add, psize[1] + add))
+
+    return masks
+
+def rotate_mask_horizontal(arr, rot, loc):
+    dtr = math.pi / 180.0 # conv radians
+
+    # put origin of loc at center
+    y1, x1 = loc - np.array(arr.shape / 2)
+    theta1 = np.arctan2(y1 / x1)
+    theta2 = theta1 + (dtr * rot)
+    h = np.sqrt(y1**2 + x1**2)
+
+    y2 = h * np.sin(theta2)
+    x2 = h * np.cos(theta2)
+    
+    return rotate(arr, rot), np.array((y2, x2))
+    
 def collapse_rect_mask(mask):
-    return np.hstack((mask[0,1:-1], mask[:, -1], 
-                      mask[-1, :-1][::-1], 
-                      mask[:-1, 0][::-1]))
+    if mask.shape[0] < 2:
+        return mask
+    else:
+        return np.hstack((mask[0,1:-1], mask[:, -1], 
+                          mask[-1, :-1][::-1], 
+                          mask[:-1, 0][::-1]))
 
 def make_probe(psize):
     l = psize[0]; w = psize[1]

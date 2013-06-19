@@ -3,7 +3,7 @@ import sys, csv
 
 import numpy as np
 
-from proc import normalize, smoothg, clean_rotate
+from proc import *
 from scipy.misc import imrotate
 from scipy.signal import argrelmax
 from scipy.ndimage import gaussian_filter
@@ -27,6 +27,7 @@ def profile(section, probe, thresh=-0.5):
     dam = 0
     p = probe * section
     p = p.T[p.T.nonzero()]
+    print p.shape
     # if avg luminance is high (eg, on a vessel)
     pmean = p.mean()
     if pmean > 0.5: 
@@ -98,5 +99,14 @@ def luminance(views, stack, thetas, probesize):
     views['luminance'] = damage.sum(axis=0)
     return views
     
-def damage_profiles(stack, locs, rots, inter, n):
-    
+def damage_profiles(stack, locs, rots, inter, n, psize):
+    masks = create_masks(psize, inter, n)
+
+    count = np.zeros((stack.shape[0], n + 1))
+    for i, layer in enumerate(stack):
+        rotlayer, yx = rotate_mask_horizontal(layer, rots[i], locs[i])
+        
+        for j, mask in enumerate(masks):            
+            # apply mask
+            # prof = 
+            pass
