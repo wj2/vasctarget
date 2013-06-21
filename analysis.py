@@ -23,23 +23,25 @@ def print_misc_stats(path, alldata, key):
         writ.writerow(names)
         writ.writerow(results)
 
-def profile(section, probe, thresh=-0.5):
+def profile(section, probe, thresh=-0.7, upper=1.5):
     dam = 0
     p = probe * section
     p = p.T[p.T.nonzero()]
-    print p.shape
     # if avg luminance is high (eg, on a vessel)
-    pmean = p.mean()
-    if pmean > 0.5: 
-        dam += 1
-        p[p > 1.5] = 1
+    # if pmean > 0.5: 
+    #     dam += 1
+    #     p[p > 1.5] = 1
     
-    p = smoothg(p, 9) # smooth 
+    p = smoothg(p, 15) # smooth 
+    t = p > upper
+    dam += np.diff(t).nonzero()[0][::2].size
+    p[p > upper] = upper
+
     p[p < thresh] = thresh # elim small peaks
 
     # find number of peaks (ie, local maxima)
-    dam += argrelmax(p, order=2)[0].size
-    
+    dam += argrelmax(p, order=5)[0].size
+
     return dam, p
         
 def line_profiles(views, stack, thetas, down, gauss, probesize):

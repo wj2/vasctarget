@@ -16,7 +16,7 @@ parser.add_argument('path', help='path to your 2photon data')
 parser.add_argument('probesize', help='length (first) and thickness (second) of probe'
                     ' in microns', type=int, nargs=2)
 parser.add_argument('-g', '--gaussian', help='smooth line profiles with a gaussian '
-                    'filter (default on)', action='store_false')
+                    'filter (default on)', action='store_false', default=True)
 parser.add_argument('-l', '--luminance', help='use luminance measure (default off)',
                     action='store_true')
 parser.add_argument('-L', '--luminance-only', help='use ONLY luminance (default off)',
@@ -31,7 +31,7 @@ parser.add_argument('-d', '--downsample', help='number by which to downsample li
 parser.add_argument('-s', '--regionsize', help='size of region for best options marks '
                     '(default 50)', type=int, default=50)
 parser.add_argument('-b', '--best-in-region', help='toggle best-in-region results rather '
-                    'than all results (default on)', action='store_false')
+                    'than all results (default on)', action='store_false', default=True)
 
 
 args = parser.parse_args()
@@ -75,7 +75,8 @@ if not args.luminance_only:
                                    probesize)
 
     analysis.print_misc_stats(args.path, views, 'line')
-    analysis.print_misc_stats(args.path, views, 'linegauss')
+    if args.gaussian:
+        analysis.print_misc_stats(args.path, views, 'linegauss')
 
 """ PRESENT """
 gfig = gui.make_targeting_gui(collstack, thetas, probesize, views, args)
