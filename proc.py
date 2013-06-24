@@ -1,4 +1,6 @@
 
+import math
+
 import numpy as np
 
 from scipy.misc import imrotate
@@ -23,8 +25,8 @@ def rotate_mask_horizontal(arr, rot, loc):
     dtr = math.pi / 180.0 # conv radians
 
     # put origin of loc at center
-    y1, x1 = loc - np.array(arr.shape / 2)
-    theta1 = np.arctan2(y1 / x1)
+    y1, x1 = loc - (np.array(arr.shape) / 2)
+    theta1 = np.arctan2(y1, x1)
     theta2 = theta1 + (dtr * rot)
     h = np.sqrt(y1**2 + x1**2)
 
@@ -34,8 +36,9 @@ def rotate_mask_horizontal(arr, rot, loc):
     return rotate(arr, rot), np.array((y2, x2))
     
 def collapse_rect_mask(mask):
-    if mask.shape[0] < 2:
-        return mask
+    if min(mask.shape) < 2 or len(mask.shape) < 2:
+        return mask.T[mask.T.nonzero()]
+
     else:
         return np.hstack((mask[0,1:-1], mask[:, -1], 
                           mask[-1, :-1][::-1], 

@@ -257,17 +257,11 @@ def make_damage_gui(postack, psize):
 
     def update_display():
 
-        print postack.shape
-        print postack[i[0]].shape
-        print p.shape
         vasIm.set_data(postack[i[0]])
-        print locs[i[0]]
-        print coord_to_extent(locs[i[0]])
         pim.set_data(proc.clean_rotate(p, rots[i[0]]))
         pim.set_extent(coord_to_extent(locs[i[0]]))
         y = vasMap.set_ylim(postack[i[0]].shape[0], 0)
         x = vasMap.set_xlim(0, postack[i[0]].shape[1])
-        print y,x
         vasMap.set_title('locked: '+str(locked[0])+' (toggle with r)')
 
         plt.draw()
@@ -276,7 +270,6 @@ def make_damage_gui(postack, psize):
         probe_abs_move((event.ydata, event.xdata))
 
     def key_press(event):
-        print event.key
         if event.key == 'left':
             probe_rel_move(np.array([0, -1]))
         elif event.key == 'right':
@@ -298,6 +291,7 @@ def make_damage_gui(postack, psize):
             update_display()
         elif event.key == 'enter':
             plt.close(fig)
+
         
     # if locked, then all layers move together
     locked = [True]
@@ -327,5 +321,6 @@ def make_damage_gui(postack, psize):
     update_display()
     plt.show()
     plt.ioff()
+    plt.close()
 
     return locs, rots

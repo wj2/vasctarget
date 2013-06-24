@@ -36,47 +36,49 @@ parser.add_argument('-b', '--best-in-region', help='toggle best-in-region result
 
 args = parser.parse_args()
 
-""" VALIDATE """
-if args.angles > 180:
-    sys.stderr.write('InputError: Given value for angles > 180')
-    sys.exit(1)
 
-if not os.path.isdir(args.path):
-    sys.stderr.write('InputError: path given does not exist or is not dir')
-    sys.exit(1)
-    
-""" READ DATA """
-info, stack = read.get_data(args.path)
+if __name__ == '__main__':    
+    """ VALIDATE """
+    if args.angles > 180:
+        sys.stderr.write('InputError: Given value for angles > 180\n')
+        sys.exit(1)
 
-""" PROCESS """
-""" collapse """
+    if not os.path.isdir(args.path):
+        sys.stderr.write('InputError: path given does not exist or is not dir\n')
+        sys.exit(1)
 
-# typical probesize is 70 23
-collstack = proc.collapse_stack(stack, info['z_width'], args.z_thickness)
-thetas = proc.get_thetas(args.angles)
-avgmpp = (info['ympp'] + info['xmpp']) / 2
-probesize = (int(np.ceil(args.probesize[0] / avgmpp)), 
+    """ READ DATA """
+    info, stack = read.get_data(args.path)
+
+    """ PROCESS """
+    """ collapse """
+
+    # typical probesize is 70 23
+    collstack = proc.collapse_stack(stack, info['z_width'], args.z_thickness)
+    thetas = proc.get_thetas(args.angles)
+    avgmpp = (info['ympp'] + info['xmpp']) / 2
+    probesize = (int(np.ceil(args.probesize[0] / avgmpp)), 
              int(np.ceil(args.probesize[1] / avgmpp)))
 
-""" ANALYZE """
-views = {}
-""" luminance """
-if args.luminance_only or args.luminance:
-    sys.stdout.write('luminance...')
-    views = analysis.luminance(views, collstack, thetas, 
+    """ ANALYZE """
+    views = {}
+    """ luminance """
+    if args.luminance_only or args.luminance:
+        sys.stdout.write('luminance...')
+        views = analysis.luminance(views, collstack, thetas, 
                                probesize)
     
-""" line profiles """    
-if not args.luminance_only:
-    sys.stdout.write('line profiles...\n')
-    views = analysis.line_profiles(views, collstack, thetas, 
-                                   args.downsample,
-                                   args.gaussian,
-                                   probesize)
+    """ line profiles """    
+    if not args.luminance_only:
+        sys.stdout.write('line profiles...\n')
+        views = analysis.line_profiles(views, collstack, thetas, 
+                                       args.downsample,
+                                       args.gaussian,
+                                       probesize)
 
     analysis.print_misc_stats(args.path, views, 'line')
     if args.gaussian:
         analysis.print_misc_stats(args.path, views, 'linegauss')
 
-""" PRESENT """
-gfig = gui.make_targeting_gui(collstack, thetas, probesize, views, args)
+    """ PRESENT """    
+    gfig = gui.make_targeting_gui(collstack, thetas, probesize, views, args)
