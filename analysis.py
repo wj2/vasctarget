@@ -52,14 +52,14 @@ def print_tddict(dic):
             writ.writerow(l)
     
 
-def profile(p, thresh=-0.7, upper=1.5):
+def profile(p, thresh=-0.5, upper=1.5, smooth=20, peaksize=5):
     dam = 0
     # if avg luminance is high (eg, on a vessel)
     # if pmean > 0.5: 
     #     dam += 1
     #     p[p > 1.5] = 1
     
-    p = smoothg(p, 15) # smooth 
+    p = smoothg(p, smooth) # smooth 
     t = p > upper
     dam += np.diff(t).nonzero()[0][::2].size
     p[p > upper] = upper
@@ -67,7 +67,7 @@ def profile(p, thresh=-0.7, upper=1.5):
     p[p < thresh] = thresh # elim small peaks
 
     # find number of peaks (ie, local maxima)
-    dam += argrelmax(p, order=5)[0].size
+    dam += argrelmax(p, order=peaksize)[0].size
 
     return dam, p
         
