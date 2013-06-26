@@ -47,7 +47,6 @@ sys.stdout.write('making gui...\n')
 locs, rots = gui.make_damage_gui(postack, probesize)
 
 """ CROSS LOCATE """
-print 'double yolo'
 """ ANALYZE """
 precount, prelines, masks = analysis.damage_profiles(prestack, locs, rots, 
                                                      args.interval,
@@ -58,8 +57,8 @@ postcount, postlines, masks = analysis.damage_profiles(postack, locs, rots,
                                                        args.interval, 
                                                        args.n_profiles, 
                                                        probesize)
-print 'yolo'
 """ PRINT """
-print precount, postcount
+print precount
+print postcount
 analysis.print_damage_stats((args.pre, precount), (args.post, postcount), 
                             masks)
