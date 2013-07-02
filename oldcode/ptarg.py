@@ -18,7 +18,11 @@ a = va.tiffile(path)
 tiflist = a.gettiflist(path)
 tiflist2, xml = a.get_tiffs_and_xml(tiflist)
 scales = a.get_scale(xml)
+#############################
 tiflist2 = tiflist2[400:450]
+# ori = np.array([0,30,60,90,120,150])
+ori = np.array([0])
+#############################
 nfiles = a.listsize(tiflist2)
 array3d = a.initarray(nfiles)
 tif3darray = a.tif2array(path,tiflist2,array3d)
@@ -276,8 +280,6 @@ def count_vessels(probesizemicron, theta = [0]):
 
     return damage2d, lineprofiles, subzstack
 
-# ori = np.array([0,30,60,90,120,150])
-ori = np.array([0])
 damage, lineprof, subz = count_vessels(probesize, ori)
 lumdam = build_histogram(probesize, ori)
 probe = build_kernel(probesize, ori)
