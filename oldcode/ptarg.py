@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append('/Library/Python/2.6/site-packages/')
 import numpy as np, analysis as dsp
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gspec
