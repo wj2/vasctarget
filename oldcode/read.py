@@ -1,5 +1,7 @@
 
-import os, Image
+import os
+
+from PIL import Image
 
 import numpy as np
 import BeautifulSoup as bs
