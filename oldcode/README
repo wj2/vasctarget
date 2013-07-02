@@ -1,0 +1,18 @@
+In progress tool for vasculature-based microelectrode 
+insertion targetting based on 2-photon microscopy data; 
+also developing the capability to provide an assessment
+of damage to vasculature caused by probe insertion.
+
+Requirements:
+    python, numpy, scipy (0.11.0 or greater)
+
+Use:
+(1) configuration
+    create config.py file in directory with path to
+    folder holding tiff image stack and xml metadata
+(2) execution
+    run './ptarg.py'
+    
+This tool is utterly and completely fluid and in 
+progress. It is subject to complete change at any
+time.
