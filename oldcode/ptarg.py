@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import numpy as np, analysis as dsp
-import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gspec
 from scipy import ndimage
