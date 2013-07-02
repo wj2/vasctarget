@@ -2,7 +2,7 @@ import os
 import glob
 
 import numpy as np
-import Image
+from PIL import Image
 
 import xml_parser.xml_parser as xp
 
