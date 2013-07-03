@@ -270,21 +270,23 @@ def make_damage_gui(postack, psize):
         probe_abs_move((event.ydata, event.xdata))
 
     def key_press(event):
-        if event.key == 'left':
+        if event.key == 'a' or event.key == 'A' or event.key == 'left':
             probe_rel_move(np.array([0, -1]))
-        elif event.key == 'right':
+        elif event.key == 'd' or event.key == 'D' or event.key == 'right':
             probe_rel_move(np.array([0, 1]))
-        elif event.key == 'up':
+        elif event.key == 'w' or event.key == 'W' or event.key == 'up':
             probe_rel_move(np.array([-1, 0]))
-        elif event.key == 'down':
+        elif event.key == 's' or event.key == 'S' or event.key == 'down':
             probe_rel_move(np.array([1, 0]))
         elif event.key == 'q' or event.key == 'Q':
             probe_rel_rotate(-1)
         elif event.key == 'e' or event.key == 'E':
             probe_rel_rotate(1)
-        elif event.key == 'ctrl+up':
+        elif (event.key == 'ctrl+w' or event.key == 'ctrl+W' 
+              or event.key == 'ctrl+up'):
             subz_rel_change(-1)
-        elif event.key == 'ctrl+down':
+        elif (event.key == 'ctrl+s' or event.key == 'ctrl+S' 
+              or event.key == 'ctrl+down'):
             subz_rel_change(1)
         elif event.key == 'r' or event.key == 'R':
             locked[0] = not locked[0]
@@ -315,7 +317,7 @@ def make_damage_gui(postack, psize):
     vasIm = vasMap.imshow(postack[i[0]], 'gray', interpolation='none')
     
     # probe display
-    pim = vasMap.imshow(p, extent=[0,0,0,0])
+    pim = vasMap.imshow(p, extent=[0,0,0,0], alpha=0.5)
 
     # make it so!
     update_display()

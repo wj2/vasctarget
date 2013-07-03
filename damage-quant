@@ -31,12 +31,12 @@ if __name__ == '__main__':
     print maxloc
     print locs
     prelocs = locs + (np.array((maxloc[0][0], maxloc[1][0])) 
-                      - np.array(postack[0].shape) / 2)
+                      - np.array(postack[0].shape) / 4)
     print prelocs
 
     if (prelocs.min() < 0 
-        or prelocs[:, 0].max() > prestack.shape[0] 
-        or prelocs[:, 1].max() > prestack.shape[1]):
+        or prelocs[:, 0].max() > prestack.shape[1] 
+        or prelocs[:, 1].max() > prestack.shape[2]):
         sys.stderr.write('RuntimeError: Match to pre-data has one or more '
                          'probe locations out of bounds\n')
         sys.exit(1)
