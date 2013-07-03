@@ -25,15 +25,22 @@ def rotate_mask_horizontal(arr, rot, loc):
     dtr = math.pi / 180.0 # conv radians
 
     # put origin of loc at center
-    y1, x1 = loc - (np.array(arr.shape) / 2)
-    theta1 = np.arctan2(y1, x1)
-    theta2 = theta1 + (dtr * rot)
+    cent = np.array(arr.shape) / 2
+    y1, x1 = loc - cent
+    theta1 = np.arctan(y1 / x1)
+    theta2 = theta1 + (dtr * -rot)
     h = np.sqrt(y1**2 + x1**2)
-
-    y2 = h * np.sin(theta2)
-    x2 = h * np.cos(theta2)
     
-    return rotate(arr, rot), np.array((y2, x2))
+    rotted = rotate(arr, rot)
+    newcent = np.array(rotted.shape) / 2
+    
+    print x1, '->', h * np.cos(theta2)
+    print y1, '->', h * np.sin(theta2)
+
+    y2 = h * np.sin(theta2) + newcent[0]
+    x2 = h * np.cos(theta2) + newcent[1]
+    
+    return rotted, np.array((y2, x2))
     
 def collapse_rect_mask(mask):
     if min(mask.shape) < 2 or len(mask.shape) < 2:
@@ -54,13 +61,15 @@ def collapse_stack(stack, delta, factor=50):
     factor = factor / delta
 
     numSlices = int(np.ceil(stack.shape[0] / factor))
-    holster = np.empty((numSlices, stack.shape[1], stack.shape[2]))
 
-    for i in xrange(numSlices):
-        holster[i] = np.mean(stack[i*factor:i*factor + factor],
-                          axis=0)
-        
-    return holster
+    if numSlices != stack.shape[0]:
+        holster = np.empty((numSlices, stack.shape[1], stack.shape[2]))
+        for i in xrange(numSlices):
+            holster[i] = np.mean(stack[i*factor:i*factor + factor],
+                                 axis=0)
+        return holster
+    else:
+        return stack
 
 def clean_rotate(probe, t, interp='nearest'):
     rotated = imrotate(probe, t, interp='nearest')

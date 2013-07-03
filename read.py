@@ -7,8 +7,11 @@ import BeautifulSoup as bs
 from scipy.misc import imread
 from PIL import Image
 
+from tifffile import TIFFfile
+from proc import collapse_stack
 
-def find_tifs_and_xml(path, channel='Ch1'):
+
+def find_tifs_and_xml_folder(path, channel='Ch1'):
     files = os.listdir(path)
     tifseries = []
     for f in files:
@@ -18,6 +21,13 @@ def find_tifs_and_xml(path, channel='Ch1'):
         elif ext == '.tif' and channel in f:
             tifseries.append(os.path.join(path, f))
     return xml, sorted(tifseries)
+
+def find_tifs_and_xml_file(path):
+    data = TIFFfile(path).asarray()
+    name = os.path.splitext(path)[0]
+    xml = name + '.xml'
+
+    return xml, data
 
 def get_config_info(xml):
     soup = bs.BeautifulStoneSoup(open(xml, 'rb'))
@@ -48,11 +58,17 @@ def stack_tifs(tifseries, xsize, ysize):
 
     return holster
               
-def get_data(path):
+def get_data(path, zthick):
+    if os.path.isdir(path):
+        xml, series = find_tifs_and_xml_folder(path)
+        data = stack_tifs(series, info['xsize'], info['ysize'])
+    elif os.path.isfile(path):
+        xml, data = find_tifs_and_xml_file(path)
+    else:
+        sys.stderr.write('InputError: path given does not exist')
+        sys.exit(1)
 
-    xml, series = find_tifs_and_xml(path)
-    info = get_config_info(xml)
-    data = stack_tifs(series, info['xsize'], info['ysize'])
-    
+    info = get_config_info(xml)    
+    data = collapse_stack(data, info['z_width'], zthick)
     return info, data
 

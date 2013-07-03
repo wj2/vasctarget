@@ -1,64 +1,59 @@
 #!/usr/bin/python
 
-import sys, argparse, os
+import sys, os
 sys.path.append('/Library/Python/2.6/site-packages/')
-import read, proc, analysis, gui
+import read, proc, analysis, gui, locate, parsers
 
 import numpy as np
 
-parser = argparse.ArgumentParser(description='provide quantification of damage '
-                                 'between pre and post datasets')
-parser.add_argument('pre', help='path to your 2photon *pre* data')
-parser.add_argument('post', help='path to your 2photon *post* data')
-parser.add_argument('probesize', help='length (first) and thickness (second) of'
-                    ' probe in microns', type=int, nargs=2)
-parser.add_argument('-i', '--interval', help='number of microns between line '
-                    'profiles (default 50)', type=int, default=50)
-parser.add_argument('-n', '--n-profiles', help='number of profiles (default 3)',
-                    type=int, default=3)
-parser.add_argument('-t', '--z-thickness', help='designate thickness (in '
-                    'microns) of z-collapse in the sub-z stack (default 50)', 
-                    type=int, default=50)
-args = parser.parse_args()
+if __name__ == '__main__':
+    parser = parsers.get_damage_quant_parser()
 
-""" VALIDATE """
-if not os.path.isdir(args.pre):
-    sys.stderr.write('InputError: pre given does not exist or is not dir')
-    sys.exit(1)
-if not os.path.isdir(args.post):
-    sys.stderr.write('InputError: post given does not exist or is not dir')
-    sys.exit(1)
+    args = parser.parse_args()
 
+    """ READ DATA """
+    sys.stdout.write('reading pre...\n')
+    preinfo, prestack = read.get_data(args.pre, args.z_thickness)
+    sys.stdout.write('reading post...\n')
+    postinfo, postack = read.get_data(args.post, args.z_thickness)
 
-""" READ DATA """
-sys.stdout.write('reading pre...\n')
-preinfo, prestack = read.get_data(args.pre)
-sys.stdout.write('reading post...\n')
-postinfo, postack = read.get_data(args.post)
+    """ PROCESS """
+    avgmpp = (postinfo['ympp'] + postinfo['xmpp']) / 2
+    probesize = (int(np.ceil(args.probesize[0] / avgmpp)), 
+                 int(np.ceil(args.probesize[1] / avgmpp)))
 
-postack = proc.collapse_stack(postack, postinfo['z_width'], args.z_thickness)
-prestack = proc.collapse_stack(prestack, preinfo['z_width'], args.z_thickness)
-avgmpp = (postinfo['ympp'] + postinfo['xmpp']) / 2
-probesize = (int(np.ceil(args.probesize[0] / avgmpp)), 
-             int(np.ceil(args.probesize[1] / avgmpp)))
+    """ ELICIT INPUT """
+    sys.stdout.write('making gui...\n')
+    locs, rots = gui.make_damage_gui(postack, probesize)
 
-""" ELICIT INPUT """
-sys.stdout.write('making gui...\n')
-locs, rots = gui.make_damage_gui(postack, probesize)
+    """ CROSS LOCATE """
+    maxloc = locate.nccfft(postack.mean(0), prestack.mean(0))
+    print maxloc
+    print locs
+    prelocs = locs + (np.array((maxloc[0][0], maxloc[1][0])) 
+                      - np.array(postack[0].shape) / 2)
+    print prelocs
 
-""" CROSS LOCATE """
-""" ANALYZE """
-precount, prelines, masks = analysis.damage_profiles(prestack, locs, rots, 
-                                                     args.interval,
-                                                     args.n_profiles, 
-                                                     probesize)
+    if (prelocs.min() < 0 
+        or prelocs[:, 0].max() > prestack.shape[0] 
+        or prelocs[:, 1].max() > prestack.shape[1]):
+        sys.stderr.write('RuntimeError: Match to pre-data has one or more '
+                         'probe locations out of bounds\n')
+        sys.exit(1)
 
-postcount, postlines, masks = analysis.damage_profiles(postack, locs, rots, 
-                                                       args.interval, 
-                                                       args.n_profiles, 
-                                                       probesize)
-""" PRINT """
-print precount
-print postcount
-analysis.print_damage_stats((args.pre, precount), (args.post, postcount), 
-                            masks)
+    """ ANALYZE """
+    precount, prelines, masks = analysis.damage_profiles(prestack, prelocs, 
+                                                         rots, args.interval,
+                                                         args.n_profiles, 
+                                                         probesize, args.debug)
+    
+    postcount, postlines, masks = analysis.damage_profiles(postack, locs, 
+                                                           rots, args.interval, 
+                                                           args.n_profiles, 
+                                                           probesize, args.debug)
+    """ PRINT """
+    print precount
+    print postcount
+    analysis.print_damage_stats((args.pre, precount), (args.post, postcount), 
+                                masks)
+    sys.exit(0)

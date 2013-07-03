@@ -52,14 +52,14 @@ def print_tddict(dic):
             writ.writerow(l)
     
 
-def profile(p, thresh=-0.5, upper=1.5, smooth=20, peaksize=5):
+def profile(p, thresh=-0.7, upper=1.5, smooth=20, peaksize=5):
     dam = 0
-    # if avg luminance is high (eg, on a vessel)
-    # if pmean > 0.5: 
-    #     dam += 1
-    #     p[p > 1.5] = 1
     
     p = smoothg(p, smooth) # smooth 
+    # if whole luminance is high (eg, on a vessel)
+    if p.min() >= upper: 
+        dam += 1
+    
     t = p > upper
     dam += np.diff(t).nonzero()[0][::2].size
     p[p > upper] = upper
@@ -72,6 +72,7 @@ def profile(p, thresh=-0.5, upper=1.5, smooth=20, peaksize=5):
     return dam, p
         
 def line_profiles(views, stack, thetas, down, gauss, probesize):
+    # avoid big top level vessels, how to do it visually
     # represent probe as single line
     l = probesize[0]
     probe = np.zeros((l, l))
@@ -131,21 +132,45 @@ def luminance(views, stack, thetas, probesize):
     views['luminance'] = damage.sum(axis=0)
     return views
     
-def damage_profiles(stack, locs, rots, inter, n, psize):
+def damage_profiles(stack, locs, rots, inter, n, psize, debug):
     masks = create_masks(psize, inter, n)
-
+    if debug:
+        import matplotlib.pyplot as plt
     count = np.zeros((stack.shape[0], n + 1))
     lines = np.empty((stack.shape[0], n + 1), dtype=object)
     for i, layer in enumerate(stack):
+        print rots[i], locs[i]
         rotlayer, yx = rotate_mask_horizontal(layer, rots[i], locs[i])
         rotlayer = normalize(rotlayer)
+        print rotlayer.shape, yx
         for j, mask in enumerate(masks):         
-            section = rotlayer[yx[0]:yx[0]+mask.shape[0],
-                               yx[1]:yx[1]+mask.shape[1]]
+            print mask.shape
+
+            section = rotlayer[yx[0]-(mask.shape[0]/2.0):yx[0]+(mask.shape[0]/2.0),
+                               yx[1]-(mask.shape[1]/2.0):yx[1]+(mask.shape[1]/2.0)]
             dat = mask * section
             prof = collapse_rect_mask(dat)
         
             count[i, j], lines[i, j] = profile(prof)
+            if debug:
+                printfig = plt.figure()
+                layax = printfig.add_subplot(211)
+                layax.imshow(rotlayer, 'gray', interpolation='none')
+                pim = layax.imshow(mask, extent=[0,0,0,0], interpolation='none')
+                pim.set_extent([yx[1]-(mask.shape[1]/2.0),
+                                yx[1]+(mask.shape[1]/2.0),
+                                yx[0]-(mask.shape[0]/2.0),
+                                yx[0]+(mask.shape[0]/2.0)])
+                layax.set_ylim(rotlayer.shape[1], 0)
+                layax.set_xlim(0, rotlayer.shape[0])
+                layax.set_title(count[i,j])
+
+                lineax = printfig.add_subplot(212)
+                lineax.plot(lines[i, j])
+
+                printfig.savefig(str(i)+str(mask.shape)+'.pdf', format='pdf')
+                plt.close(printfig)
+
 
     return count, lines, masks
     
