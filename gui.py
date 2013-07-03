@@ -282,10 +282,10 @@ def make_damage_gui(postack, psize):
             probe_rel_rotate(-1)
         elif event.key == 'e' or event.key == 'E':
             probe_rel_rotate(1)
-        elif (event.key == 'ctrl+w' or event.key == 'ctrl+W' 
+        elif (event.key == 't' or event.key == 'ctrl+W' 
               or event.key == 'ctrl+up'):
             subz_rel_change(-1)
-        elif (event.key == 'ctrl+s' or event.key == 'ctrl+S' 
+        elif (event.key == 'g' or event.key == 'ctrl+S' 
               or event.key == 'ctrl+down'):
             subz_rel_change(1)
         elif event.key == 'r' or event.key == 'R':
