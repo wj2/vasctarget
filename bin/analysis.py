@@ -132,7 +132,16 @@ def luminance(views, stack, thetas, probesize):
     views['luminance'] = damage.sum(axis=0)
     return views
     
-def damage_profiles(stack, locs, rots, inter, n, psize, debug):
+def damage_profiles(stack, locs, rots, psize, args):
+    # get items out of args namespace
+    inter = args.interval
+    n = args.n_profiles
+    debug = args.debug
+    if args.smooth:
+        sm = 25
+    else:
+        sm = 20
+
     masks = create_masks(psize, inter, n)
     if debug:
         import matplotlib.pyplot as plt
@@ -151,7 +160,7 @@ def damage_profiles(stack, locs, rots, inter, n, psize, debug):
             dat = mask * section
             prof = collapse_rect_mask(dat)
         
-            count[i, j], lines[i, j] = profile(prof)
+            count[i, j], lines[i, j] = profile(prof, smooth=sm)
             if debug:
                 printfig = plt.figure()
                 layax = printfig.add_subplot(211)

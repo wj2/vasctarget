@@ -270,22 +270,22 @@ def make_damage_gui(postack, psize):
         probe_abs_move((event.ydata, event.xdata))
 
     def key_press(event):
-        if event.key == 'a' or event.key == 'A' or event.key == 'left':
+        if event.key == 'j' or event.key == 'J' or event.key == 'left':
             probe_rel_move(np.array([0, -1]))
-        elif event.key == 'd' or event.key == 'D' or event.key == 'right':
+        elif event.key == 'l' or event.key == 'L' or event.key == 'right':
             probe_rel_move(np.array([0, 1]))
-        elif event.key == 'w' or event.key == 'W' or event.key == 'up':
+        elif event.key == 'i' or event.key == 'I' or event.key == 'up':
             probe_rel_move(np.array([-1, 0]))
-        elif event.key == 's' or event.key == 'S' or event.key == 'down':
+        elif event.key == 'k' or event.key == 'K' or event.key == 'down':
             probe_rel_move(np.array([1, 0]))
         elif event.key == 'q' or event.key == 'Q':
             probe_rel_rotate(-1)
         elif event.key == 'e' or event.key == 'E':
             probe_rel_rotate(1)
-        elif (event.key == 't' or event.key == 'ctrl+W' 
+        elif (event.key == 't' or event.key == 'ctrl+i' 
               or event.key == 'ctrl+up'):
             subz_rel_change(-1)
-        elif (event.key == 'g' or event.key == 'ctrl+S' 
+        elif (event.key == 'g' or event.key == 'ctrl+j' 
               or event.key == 'ctrl+down'):
             subz_rel_change(1)
         elif event.key == 'r' or event.key == 'R':

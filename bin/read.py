@@ -58,17 +58,18 @@ def stack_tifs(tifseries, xsize, ysize):
 
     return holster
               
-def get_data(path, zthick):
+def get_data(path, zthick, chan):
     if os.path.isdir(path):
-        xml, series = find_tifs_and_xml_folder(path)
+        xml, series = find_tifs_and_xml_folder(path, chan)
+        info = get_config_info(xml)        
         data = stack_tifs(series, info['xsize'], info['ysize'])
     elif os.path.isfile(path):
         xml, data = find_tifs_and_xml_file(path)
+        info = get_config_info(xml)    
     else:
         sys.stderr.write('InputError: path given does not exist')
         sys.exit(1)
 
-    info = get_config_info(xml)    
     data = collapse_stack(data, info['z_width'], zthick)
     return info, data
 

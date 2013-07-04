@@ -16,6 +16,12 @@ def get_damage_quant_parser():
                         type=int, default=50)
     parser.add_argument('-d', '--debug', help='print debug pdfs of each mask on '
                         'rotated layers (default off)', action='store_true')
+    parser.add_argument('-s', '--smooth', help='turn on extra smoothing for '
+                        'data that has bleeds, may miss some smaller vessels '
+                        'but will hopefully reduce false positives '
+                        '(default off)', action='store_true')
+    parser.add_argument('-c', '--channel', help='indicate a channel different '
+                        'than Ch1 to use for analysis', nargs=1, default='Ch1')
 
     return parser
 
@@ -41,6 +47,8 @@ def get_vasc_target_parser():
     parser.add_argument('-b', '--best-in-region', help='toggle best-in-region '
                         'results rather than all results (default on)', 
                         action='store_false', default=True)
+    parser.add_argument('-c', '--channel', help='indicate a channel different '
+                        'than Ch1 to use for analysis', nargs=1, default='Ch1')
 
     return parser
 
@@ -65,6 +73,9 @@ def get_vasc_stats_parser():
     parser.add_argument('-d', '--downsample', help='number by which to '
                         'downsample line profile analysis (default 3)', type=int, 
                         default=3)
+    parser.add_argument('-c', '--channel', help='indicate a channel different '
+                        'than Ch1 to use for analysis', nargs=1, default='Ch1')
+
 
     return parser
 

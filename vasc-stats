@@ -2,7 +2,7 @@
 
 import sys, argparse, os
 sys.path.append('/Library/Python/2.6/site-packages/')
-import read, proc, analysis, gui, parsers
+from bin import read, proc, analysis, gui, parsers
 
 import numpy as np
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         """ READ DATA """
-        info, stack = read.get_data(p)
+        info, stack = read.get_data(p, args.z_thickness, args.channel)
         
         """ PROCESS """
         thetas = proc.get_thetas(args.angles)

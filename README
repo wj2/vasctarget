@@ -1,10 +1,27 @@
-In progress tool for targeting insertion of microelectrodes
-based on 2-photon imaging of the vasculature; 
-also developing the capability to provide an assessment
-of damage to vasculature caused by probe insertion.
+Tool for targeting insertion of microelectrodes based on
+brain vasculature, analysing brain vasculature, and 
+quantifying damage to vasculature. Still in progress. 
 
 Requirements:
     python, numpy, scipy (0.11.0 or greater), matplotlib
+
+Uses 2-photon microscopy data stored in tif form. Multipage
+and singleton series of tifs are supported. 
+    
+    for multipage : give path to the single file, there 
+                    must also be an xml file giving 
+                    microscopy metadata by the *same* name
+                    except the extension in the *same* folder
+
+    for singleton : give path to the folder containing all
+                    tif files for a *single* dataset, the
+                    program will default to Ch1 but can be 
+                    changed by the -c argument, there must 
+                    be an xml file of microscopy metadata 
+                    by the *same* name as the folder in 
+                    the given folder
+
+TARGETING
 
 Use:
 
@@ -17,4 +34,108 @@ where *path* is the path to the folder with your 2-photon
 
       *probe-width* is the width of your probe in microns
 
-see ./vasc-target -h for more options.
+see ./vasc-target -h for information about options.
+
+Control:
+
+    upon completion of the analysis, a figure will pop up 
+    displaying, from left to right and top to bottom, a heat
+    map showing the damage value of the least damaging probe
+    orientation as well as a marker for the currently 
+    selected location, the overall average vasculature image
+    as well as a marker for the currently selected position, 
+    and a histogram showing the distribution of the damage
+
+        'left'            : choose next location, descending
+                            in damage
+        'right'           : choose next location, ascending
+                            in damage
+        'enter'           : choose current location and close
+                            window
+        'escape'          : close window
+
+Output:
+
+    if you choose a location from the gui, a pdf will be 
+    created in current directory displaying the top level
+    of imaged vasculature and a marker for the probe location
+    chosen -- the naming convention for the pdf is:
+
+        "dam<number of vessels counted>at<y-coord>,<x-coord>.pdf'
+
+STATISTICS
+
+Use:
+
+    ./vasc-stats probe-length probe-width paths ...
+
+where *probe-length* is the length of your probe in microns
+
+      *probe-width* is the width of your probe in microns
+
+      *paths ...* are any number of paths to datasets
+
+see ./vasc-stats -h for information about options.
+
+Output: 
+
+    creates a csv in current directory with various statistics
+    about the vasculature -- csv naming convention is:
+ 
+        "stats<time and date of run>.csv"
+
+    with a section for each dataset that was run
+
+DAMAGE QUANTIFICATION
+
+Use:
+
+    ./damage-quant pre post probe-length probe-width
+
+where *pre* is the path to the pre-insertion 2-photon
+      tif data
+
+      *post* is the path to the post-insertion 2-photon
+      tif data
+
+      *probe-length* is the length of your probe in microns
+
+      *probe-width* is the width of your probe in microns
+
+see ./damage-quant -h for information about options.
+
+Control:
+
+    after the data is read in, a window will pop open with the
+    top level of the vasculature images and a probe-image 
+    imposed over it; to move the probe image toward the insertion
+    location:
+
+        mouse-click       : move probe image to location of click
+        'left', 'a', 'j'  : move probe image one pixel left
+        'right', 'd', 'l' : move probe image one pixel right
+        'up', 'w', 'i'    : move probe image one pixel up
+        'down', 's', 'k'  : move probe image one pixel down
+        'q'               : rotate probe image one degree 
+                            anti-clockwise
+        'e'               : rotate probe image one degree 
+                            clockwise
+        'ctrl+up', 't',   : show slice of data above current
+        'ctrl+w'          
+        'ctrl+down', 'g', : show slice of data below current
+        'ctrl+s'
+        'r'               : lock or unlock  probes together across
+                            slices
+
+    many keys have multiple options since, depending both on 
+    matplotlib backend and operating system, they can be usurped
+    for other purposes -- eg, 'ctrl+s' and even 's' are often
+    usurped for purposes of saving the figure
+
+Output:
+
+    creates a csv in current directory with side-by-side data
+    for pre and post line profiles around chosen point; the 
+    rows descend in depth of imaging; the naming convention is:
+
+        "damage<time and date of run>.csv"

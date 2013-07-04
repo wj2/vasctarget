@@ -2,7 +2,7 @@
 
 import sys, os
 sys.path.append('/Library/Python/2.6/site-packages/')
-import read, proc, analysis, gui, locate, parsers
+from bin import read, proc, analysis, gui, locate, parsers
 
 import numpy as np
 
@@ -13,9 +13,11 @@ if __name__ == '__main__':
 
     """ READ DATA """
     sys.stdout.write('reading pre...\n')
-    preinfo, prestack = read.get_data(args.pre, args.z_thickness)
+    preinfo, prestack = read.get_data(args.pre, args.z_thickness, 
+                                      args.channel)
     sys.stdout.write('reading post...\n')
-    postinfo, postack = read.get_data(args.post, args.z_thickness)
+    postinfo, postack = read.get_data(args.post, args.z_thickness, 
+                                      args.channel)
 
     """ PROCESS """
     avgmpp = (postinfo['ympp'] + postinfo['xmpp']) / 2
@@ -43,14 +45,12 @@ if __name__ == '__main__':
 
     """ ANALYZE """
     precount, prelines, masks = analysis.damage_profiles(prestack, prelocs, 
-                                                         rots, args.interval,
-                                                         args.n_profiles, 
-                                                         probesize, args.debug)
+                                                         rots, probesize,
+                                                         args)
     
     postcount, postlines, masks = analysis.damage_profiles(postack, locs, 
-                                                           rots, args.interval, 
-                                                           args.n_profiles, 
-                                                           probesize, args.debug)
+                                                           rots, probesize,
+                                                           args)
     """ PRINT """
     print precount
     print postcount
