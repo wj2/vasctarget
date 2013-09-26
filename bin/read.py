@@ -16,7 +16,7 @@ def find_tifs_and_xml_folder(path, channel='Ch1'):
     tifseries = []
     for f in files:
         name, ext = os.path.splitext(f)
-        if ext == '.xml':
+        if ext == '.xml' or ext == '.cfg':
             xml = os.path.join(path, f)
         elif ext == '.tif' and channel in f:
             tifseries.append(os.path.join(path, f))
@@ -40,9 +40,15 @@ def get_config_info(xml):
                                    key='micronsPerPixel_XAxis')['value'])
     info['ympp'] = float(soup.find('key', 
                                    key='micronsPerPixel_YAxis')['value'])
-    widths = soup('key', key='positionCurrent_ZAxis')
-    info['z_width'] = abs(float(widths[1]['value']) 
-                          - float(widths[0]['value']))
+    if os.path.splitext(xml)[1] == '.xml':
+        widths = soup('key', key='positionCurrent_ZAxis')
+        info['z_width'] = abs(float(widths[1]['value']) 
+                              - float(widths[0]['value']))
+    # elif os.path.splitext(xml)[1] == '.cfg':
+    #     width = float(soup('key', key='motorStepSize_ZAxis')[0]['value'])
+    #     info['z_width'] = abs(width)
+    else:
+        info['z_width'] = 1
 
     return info
 
@@ -61,6 +67,7 @@ def stack_tifs(tifseries, xsize, ysize):
 def get_data(path, zthick, chan):
     if os.path.isdir(path):
         xml, series = find_tifs_and_xml_folder(path, chan)
+        print len(series)
         info = get_config_info(xml)        
         data = stack_tifs(series, info['xsize'], info['ysize'])
     elif os.path.isfile(path):

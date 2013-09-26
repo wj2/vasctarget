@@ -41,9 +41,9 @@ def print_misc_stats(path, alldata, key, write=True):
     else:
         return names, results
 
-def print_tddict(dic):
+def print_tddict(dic, title):
     t = time.strftime('%X%x%Z').replace(' ','').replace(':','.').replace('/','-')
-    filename = 'stats'+t+'.csv'
+    filename = 'stats_'+title+'_'+t+'.csv'
     
     with open(filename, 'wb') as cf:
         writ = csv.writer(cf)

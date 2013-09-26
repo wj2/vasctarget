@@ -55,13 +55,15 @@ def get_vasc_target_parser():
 def get_vasc_stats_parser():
     parser = argparse.ArgumentParser(description='provide targeting for probe '
                                      'insertion')
-    parser.add_argument('probesize', help='length (first) and thickness '
-                        '(second) of probe in microns', type=int, nargs=2)
     parser.add_argument('paths', help='paths to your 2photon data', nargs='+')
     parser.add_argument('-g', '--gaussian', help='smooth line profiles with a '
                         'gaussian filter (default on)', action='store_false', 
                         default=True)
-    parser.add_argument('-l', '--luminance', help='use luminance measure '
+    parser.add_argument('-l', '--lengths', help='list lengths to use for stats',
+                        nargs='+', type=int)
+    parser.add_argument('-w', '--widths', help='list widths to use for stats',
+                        nargs='+', type=int)
+    parser.add_argument('-u', '--luminance', help='use luminance measure '
                         '(default off)', action='store_true')
     parser.add_argument('-L', '--luminance-only', help='use ONLY luminance '
                         '(default off)', action='store_true')

@@ -18,49 +18,62 @@ if __name__ == '__main__':
     gaussian = {'data':[]}
     lines = {'data':[]}
 
+    """ check as many lengths as widths """
+    if len(args.widths) != len(args.lengths):
+        sys.stderr.write('InputError: Gave different number of lengths and widths\n')
+        sys.exit(1)
+        
     for p in args.paths:
         """ VALIDATE """
         if args.angles > 180:
             sys.stderr.write('InputError: Given value for angles > 180\n')
             sys.exit(1)
-
+        
         """ READ DATA """
         info, stack = read.get_data(p, args.z_thickness, args.channel)
-        
-        """ PROCESS """
-        thetas = proc.get_thetas(args.angles)
-        avgmpp = (info['ympp'] + info['xmpp']) / 2
-        probesize = (int(np.ceil(args.probesize[0] / avgmpp)), 
-                     int(np.ceil(args.probesize[1] / avgmpp)))
 
-        """ ANALYZE """
-        views = {}
-        """ luminance """
-        if args.luminance_only or args.luminance:
-            sys.stdout.write('luminance...')
-            views = analysis.luminance(views, stack, thetas, 
+        for i, l in enumerate(args.lengths):
+            probesize = (l, args.widths[i])
+        
+            """ PROCESS """
+            thetas = proc.get_thetas(args.angles)
+            avgmpp = (info['ympp'] + info['xmpp']) / 2
+            probesize = (int(np.ceil(probesize[0] / avgmpp)), 
+                         int(np.ceil(probesize[1] / avgmpp)))
+
+            """ ANALYZE """
+            views = {}
+            """ luminance """
+            if args.luminance_only or args.luminance:
+                sys.stdout.write('luminance...')
+                views = analysis.luminance(views, stack, thetas, 
                                        probesize)
     
-        """ line profiles """    
-        if not args.luminance_only:
-            sys.stdout.write('line profiles...\n')
-            views = analysis.line_profiles(views, stack, thetas, 
-                                           args.downsample,
-                                           args.gaussian,
-                                           probesize)
+            """ line profiles """    
+            if not args.luminance_only:
+                sys.stdout.write('line profiles...\n')
+                views = analysis.line_profiles(views, stack, thetas, 
+                                               args.downsample,
+                                               args.gaussian,
+                                               probesize)
 
-        titles, results = analysis.print_misc_stats(p, views, 'line', 
-                                                    write=False)
-        lines['title'] = titles
-        lines['data'].append(results)
-        if args.gaussian:
-            titles, results = analysis.print_misc_stats(p, views, 
-                                                        'linegauss', 
+            titles, results = analysis.print_misc_stats(p, views, 'line', 
                                                         write=False)
-            gaussian['title'] = titles
-            gaussian['data'].append(results)
+            """ add size information """
+            titles = ['probesize'] + titles
+            results = [probesize] + results
+            lines['title'] = titles
+            lines['data'].append(results)
+            if args.gaussian:
+                titles, results = analysis.print_misc_stats(p, views, 
+                                                            'linegauss', 
+                                                            write=False)
+                titles = ['probesize'] + titles
+                results = [probesize] + results
+                gaussian['title'] = titles
+                gaussian['data'].append(results)
     
-    analysis.print_tddict(lines)
+    analysis.print_tddict(lines, 'lines')
     if args.gaussian:
-        analysis.print_tddict(gaussian)
+        analysis.print_tddict(gaussian, 'gaussian_lines')
 
