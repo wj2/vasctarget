@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import BeautifulSoup as bs
+import sys
 
 from scipy.misc import imread
 from PIL import Image
@@ -74,7 +75,7 @@ def get_data(path, zthick, chan):
         xml, data = find_tifs_and_xml_file(path)
         info = get_config_info(xml)    
     else:
-        sys.stderr.write('InputError: path given does not exist')
+        sys.stderr.write('InputError: path given does not exist\n')
         sys.exit(1)
 
     data = collapse_stack(data, info['z_width'], zthick)
