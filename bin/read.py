@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 import BeautifulSoup as bs
-import sys
+# import sys
 
 from scipy.misc import imread
 from PIL import Image

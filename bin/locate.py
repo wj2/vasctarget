@@ -39,7 +39,7 @@ def nccfft(s, p, fact=1):
     u = np.ones(p.shape)
 
     # pad matrices (necessary for convolution)
-    s = pad_one_half(s)
+    s = pad_by(s, 4)
 
     upad = pad_to_size_of(u, s)
     pmmpad = pad_to_size_of(pmm, s)
@@ -136,7 +136,7 @@ def pad_to_size_of(a, b):
     a2 = pad_zeroes(a, 0, b.shape[0] - a.shape[0])
     return pad_zeroes(a2, 1, b.shape[1] - a.shape[1])
 
-def pad_one_half(a):
-    a2 = pad_zeroes(a, 0, a.shape[0] / 4, 'both')
-    return pad_zeroes(a2, 1, a.shape[1] / 4, 'both')
+def pad_by(a, factor):
+    a2 = pad_zeroes(a, 0, a.shape[0] / (2 * factor), 'both')
+    return pad_zeroes(a2, 1, a.shape[1] / (2 * factor), 'both')
                  
