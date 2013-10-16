@@ -22,6 +22,8 @@ def get_damage_quant_parser():
                         '(default off)', action='store_true')
     parser.add_argument('-c', '--channel', help='indicate a channel different '
                         'than Ch1 to use for analysis', nargs=1, default='Ch1')
+    parser.add_argument('-r', '--room', help='inverse proportion of room for '
+                        'cross correlation', default=8, type=int)
 
     return parser
 

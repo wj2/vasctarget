@@ -29,12 +29,9 @@ if __name__ == '__main__':
     locs, rots = gui.make_damage_gui(postack, probesize)
 
     """ CROSS LOCATE """
-    maxloc = locate.nccfft(postack.mean(0), prestack.mean(0))
-    print maxloc
-    print locs
+    maxloc = locate.nccfft(postack.mean(0), prestack.mean(0), args.room)
     prelocs = locs + (np.array((maxloc[0][0], maxloc[1][0])) 
-                      - np.array(postack[0].shape) / 4)
-    print prelocs
+                      - np.array(postack[0].shape) / args.room)
 
     if (prelocs.min() < 0 
         or prelocs[:, 0].max() > prestack.shape[1] 

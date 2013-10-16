@@ -5,7 +5,7 @@ from numpy.fft import fftn, ifftn, fft2, ifft2
 from scipy.signal import fftconvolve
 from proc import normalize
 
-def nccfft(s, p, fact=1):
+def nccfft(s, p, room, fact=1):
     """Used for all Patterns that do not fall other categories.
 
     Cross correlates normalized Source and Pattern images while
@@ -39,13 +39,11 @@ def nccfft(s, p, fact=1):
     u = np.ones(p.shape)
 
     # pad matrices (necessary for convolution)
-    s = pad_by(s, 4)
+    s = pad_by(s, room)
 
     upad = pad_to_size_of(u, s)
     pmmpad = pad_to_size_of(pmm, s)
     
-    print s, pmmpad
-
     # compute neccessary ffts
     fftppad = fftn(pmmpad)
     ffts = fftn(s)
@@ -65,8 +63,6 @@ def nccfft(s, p, fact=1):
     bottom = pstd * np.sqrt(bot1 - bot2)
     full = top / bottom
 
-    print full.real.max(), full.real.min(), full.real.shape
-
     return np.where(full.real.max() == full.real)
 
 def nccfft2(s, p):
@@ -75,9 +71,6 @@ def nccfft2(s, p):
     pn = normalize(p)
 
     prob = fftconvolve(sn, pn)
-
-    print prob.min(), prob.max(), prob.shape
-    print np.where(prob == prob.max())
 
     return np.where(prob == prob.max())
 
@@ -137,6 +130,6 @@ def pad_to_size_of(a, b):
     return pad_zeroes(a2, 1, b.shape[1] - a.shape[1])
 
 def pad_by(a, factor):
-    a2 = pad_zeroes(a, 0, a.shape[0] / (2 * factor), 'both')
-    return pad_zeroes(a2, 1, a.shape[1] / (2 * factor), 'both')
+    a2 = pad_zeroes(a, 0, a.shape[0] / factor, 'both')
+    return pad_zeroes(a2, 1, a.shape[1] / factor, 'both')
                  
