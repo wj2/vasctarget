@@ -29,6 +29,9 @@ if __name__ == '__main__':
     locs, rots = gui.make_damage_gui(postack, probesize)
 
     """ CROSS LOCATE """
+    offset = (np.array((maxloc[0][0], maxloc[1][0])) 
+              - np.array(postack[0].shape) / args.room)
+    sys.stdout.write('offset: '+str(offset)+'\n')
     maxloc = locate.nccfft(postack.mean(0), prestack.mean(0), args.room)
     prelocs = locs + (np.array((maxloc[0][0], maxloc[1][0])) 
                       - np.array(postack[0].shape) / args.room)
