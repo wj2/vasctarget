@@ -34,8 +34,8 @@ def rotate_mask_horizontal(arr, rot, loc):
     rotted = rotate(arr, rot)
     newcent = np.array(rotted.shape) / 2
     
-    print x1, '->', h * np.cos(theta2)
-    print y1, '->', h * np.sin(theta2)
+    # print x1, '->', h * np.cos(theta2)
+    # print y1, '->', h * np.sin(theta2)
 
     y2 = h * np.sin(theta2) + newcent[0]
     x2 = h * np.cos(theta2) + newcent[1]

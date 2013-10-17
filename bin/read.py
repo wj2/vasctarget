@@ -1,5 +1,5 @@
 
-import os
+import os, sys
 
 import numpy as np
 import BeautifulSoup as bs
@@ -68,7 +68,7 @@ def stack_tifs(tifseries, xsize, ysize):
 def get_data(path, zthick, chan):
     if os.path.isdir(path):
         xml, series = find_tifs_and_xml_folder(path, chan)
-        print len(series)
+        sys.stdout.write('in stack: '+str(len(series))+'\n')
         info = get_config_info(xml)        
         data = stack_tifs(series, info['xsize'], info['ysize'])
     elif os.path.isfile(path):

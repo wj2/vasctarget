@@ -30,7 +30,7 @@ def get_best_locs(lines, down, regionsize, ori):
     aos, axs, ays, mins = [], [], [], []
     for y in [y*regionsize for y in xrange(yregions)]:
         for x in [x*regionsize for x in xrange(xregions)]:
-            print y, y+regionsize, x, x+regionsize
+            # print y, y+regionsize, x, x+regionsize
             region = lines[:, y:y+regionsize, x:x+regionsize]
             rmin = region.min()
             regionmin = np.where(region == rmin)
@@ -38,7 +38,7 @@ def get_best_locs(lines, down, regionsize, ori):
             ys = (regionmin[1] + y) * down; xs = (regionmin[2] + x) * down
             i = choice(xrange(ys.size))
             if rmin in best.keys():
-                print rmin, ys[i], xs[i]
+                # print rmin, ys[i], xs[i]
                 pr = best[rmin]
                 pr[0].append(regionmin[0][i])
                 pr[1].append(ys[i]); pr[2].append(xs[i])

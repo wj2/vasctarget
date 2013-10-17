@@ -148,12 +148,12 @@ def damage_profiles(stack, locs, rots, psize, args):
     count = np.zeros((stack.shape[0], n + 1))
     lines = np.empty((stack.shape[0], n + 1), dtype=object)
     for i, layer in enumerate(stack):
-        print rots[i], locs[i]
+        # print rots[i], locs[i]
         rotlayer, yx = rotate_mask_horizontal(layer, rots[i], locs[i])
         rotlayer = normalize(rotlayer)
-        print rotlayer.shape, yx
+        # print rotlayer.shape, yx
         for j, mask in enumerate(masks):         
-            print mask.shape
+            # print mask.shape
 
             section = rotlayer[yx[0]-(mask.shape[0]/2.0):yx[0]+(mask.shape[0]/2.0),
                                yx[1]-(mask.shape[1]/2.0):yx[1]+(mask.shape[1]/2.0)]
