@@ -33,7 +33,11 @@ if __name__ == '__main__':
 
     offset = (np.array((maxloc[0][0], maxloc[1][0])) 
               - np.array(postack[0].shape) / args.room)
+
+    offset = gui.make_locate_gui(prestack, postack, offset)
+
     sys.stdout.write('offset: '+str(offset)+'\n')
+
     prelocs = locs + offset
 
     if (prelocs.min() < 0 

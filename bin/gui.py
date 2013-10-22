@@ -5,6 +5,7 @@ import proc
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gspec
+import matplotlib.colors as color
 
 from matplotlib.widgets import Slider
 from scipy.misc import imrotate
@@ -326,3 +327,104 @@ def make_damage_gui(postack, psize):
     plt.close()
 
     return locs, rots
+
+
+def make_locate_gui(pre, post, offset):
+
+    def coord_to_extent(p, y, x):
+        return [x, x + p.shape[1],
+                y + p.shape[0], y]
+
+    def top_rel_move(adjust):
+        offset[0] = offset[0] + adjust
+        update_display()
+
+    def on_press(event):
+        press[0] = True 
+        clicked[0] = np.array([event.ydata, event.xdata])
+        orig_offset[0] = np.array([offset[0][0], offset[0][1]])
+
+        update_display()
+
+    def on_move(event):
+        if press[0]:
+            offset[0] = orig_offset[0] - (clicked[0] - np.array([event.ydata, 
+                                                                 event.xdata]))
+
+            update_display()
+
+    def on_release(event):
+        press[0] = False
+
+    def update_display():
+
+        base_im.set_data(post_mean)
+        # top_im.set_data()
+        top_im.set_extent(coord_to_extent(pre_mean, *offset[0]))
+
+        y = base_map.set_ylim(0, post_mean.shape[0])
+        x = base_map.set_xlim(0, post_mean.shape[1])
+
+        plt.draw()
+
+    def key_press(event):
+        if event.key == 'j' or event.key == 'J' or event.key == 'left':
+            top_rel_move(np.array([0, -1]))
+        elif event.key == 'l' or event.key == 'L' or event.key == 'right':
+            top_rel_move(np.array([0, 1]))
+        elif event.key == 'i' or event.key == 'I' or event.key == 'up':
+            top_rel_move(np.array([-1, 0]))
+        elif event.key == 'k' or event.key == 'K' or event.key == 'down':
+            top_rel_move(np.array([1, 0]))
+        elif event.key == 'enter':
+            plt.close(fig)
+
+
+    press = [False] 
+    offset = [offset]
+    orig_offset = [np.array([offset[0][0], offset[0][1]])]
+    clicked = [np.array([0,0])]
+
+    fig = plt.figure(1)
+    fig.canvas.mpl_connect('key_press_event', key_press)
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+    fig.canvas.mpl_connect('motion_notify_event', on_move)
+    
+    pre_mean = np.mean(pre, axis=0)
+    post_mean = np.mean(post, axis=0)
+
+    base_map = fig.add_subplot(111)
+    redsc = make_redscale_cm()
+    greensc = make_greenscale_cm()
+    base_im = base_map.imshow(post_mean, redsc, interpolation='none', 
+                              alpha=1.0)
+    top_im = base_map.imshow(pre_mean, greensc, interpolation='none', alpha=0.5,
+                             extent=coord_to_extent(pre_mean, *offset[0]))
+
+    update_display()
+    plt.show()
+    plt.ioff()
+    plt.close()
+
+    return offset[0]
+
+def make_redscale_cm():
+    reddict = {'red' : [(0.0, 0.0, 0.0),
+                        (1.0, 1.0, 1.0)],
+               'green' : [(0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0)],
+               'blue' : [(0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)]}
+    redscale = color.LinearSegmentedColormap('redscale', reddict)
+    return redscale    
+
+def make_greenscale_cm():
+    reddict = {'red' : [(0.0, 0.0, 0.0),
+                        (1.0, 0.0, 0.0)],
+               'green' : [(0.0, 0.0, 0.0),
+                          (1.0, 1.0, 1.0)],
+               'blue' : [(0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)]}
+    greenscale = color.LinearSegmentedColormap('greenscale', reddict)
+    return greenscale
