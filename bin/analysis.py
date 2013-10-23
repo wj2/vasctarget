@@ -1,5 +1,6 @@
 
 import sys, csv, time
+import gui
 
 import numpy as np
 
@@ -55,11 +56,13 @@ def print_tddict(dic, title):
 def profile(p, thresh=-0.7, upper=1.5, smooth=20, peaksize=5):
     dam = 0
     
-    p = smoothg(p, smooth) # smooth 
+    smooth_only = smoothg(p, smooth) # smooth 
+    p = smooth_only
     # if whole luminance is high (eg, on a vessel)
     if p.min() >= upper: 
         dam += 1
     
+    # count high peaks only once
     t = p > upper
     dam += np.diff(t).nonzero()[0][::2].size
     p[p > upper] = upper
@@ -69,7 +72,7 @@ def profile(p, thresh=-0.7, upper=1.5, smooth=20, peaksize=5):
     # find number of peaks (ie, local maxima)
     dam += argrelmax(p, order=peaksize)[0].size
 
-    return dam, p
+    return dam, p, smooth_only
         
 def line_profiles(views, stack, thetas, down, gauss, probesize):
     # avoid big top level vessels, how to do it visually
@@ -105,7 +108,7 @@ def line_profiles(views, stack, thetas, down, gauss, probesize):
                     p = rotated * section
                     p = p.T[p.T.nonzero()]
 
-                    dam, line = profile(p)
+                    dam, line, onsm = profile(p)
                     damage[i, ys, xs] += dam
                     lineprofiles[lnum, i, ys, xs] = line
                     xs += 1
@@ -133,6 +136,7 @@ def luminance(views, stack, thetas, probesize):
     return views
     
 def damage_profiles(stack, locs, rots, psize, args):
+    thresh = -0.7; upper = 1.5
     # get items out of args namespace
     inter = args.interval
     n = args.n_profiles
@@ -143,7 +147,7 @@ def damage_profiles(stack, locs, rots, psize, args):
         sm = 20
 
     masks = create_masks(psize, inter, n)
-    if debug:
+    if debug or args.manual:
         import matplotlib.pyplot as plt
     count = np.zeros((stack.shape[0], n + 1))
     lines = np.empty((stack.shape[0], n + 1), dtype=object)
@@ -155,12 +159,23 @@ def damage_profiles(stack, locs, rots, psize, args):
         for j, mask in enumerate(masks):         
             # print mask.shape
 
-            section = rotlayer[yx[0]-(mask.shape[0]/2.0):yx[0]+(mask.shape[0]/2.0),
-                               yx[1]-(mask.shape[1]/2.0):yx[1]+(mask.shape[1]/2.0)]
+            my_shape = mask.shape[0]/2.0
+            mx_shape = mask.shape[1]/2.0
+            myb_shape = mask.shape[0]/2.0 + args.buffer
+            mxb_shape = mask.shape[1]/2.0 + args.buffer
+            super_section = rotlayer[yx[0]-myb_shape:yx[0]+myb_shape,
+                                     yx[1]-mxb_shape:yx[1]+mxb_shape]
+            section = super_section[args.buffer:-args.buffer,
+                                    args.buffer:-args.buffer]
             dat = mask * section
             prof = collapse_rect_mask(dat)
         
-            count[i, j], lines[i, j] = profile(prof, smooth=sm)
+            count[i,j], lines[i,j], onsm = profile(prof, thresh=thresh, 
+                                                   upper=upper, smooth=sm)
+            if args.manual:
+                results = gui.make_thresh_setter(prof, thresh, upper, mask, 
+                                                 super_section, args.buffer, sm)
+                count[i,j], lines[i,j], args.manual = results
             if debug:
                 printfig = plt.figure()
                 layax = printfig.add_subplot(211)
@@ -182,4 +197,3 @@ def damage_profiles(stack, locs, rots, psize, args):
 
 
     return count, lines, masks
-    

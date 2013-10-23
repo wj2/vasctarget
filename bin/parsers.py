@@ -24,6 +24,11 @@ def get_damage_quant_parser():
                         'than Ch1 to use for analysis', nargs=1, default='Ch1')
     parser.add_argument('-r', '--room', help='inverse proportion of room for '
                         'cross correlation', default=8, type=int)
+    parser.add_argument('-b', '--buffer', help='pixels on all sides to use as '
+                        'buffer for renorming of line profiles', default=50, 
+                        type=int)
+    parser.add_argument('-m','--manual', help='set threshold manually for the '
+                        'line profiles', action='store_false', default=True)
 
     return parser
 

@@ -1,6 +1,6 @@
 
 import sys
-import proc
+import proc, analysis
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,6 +10,39 @@ import matplotlib.colors as color
 from matplotlib.widgets import Slider
 from scipy.misc import imrotate
 from random import choice
+
+def make_redscale_cm():
+    reddict = {'red' : [(0.0, 0.0, 0.0),
+                        (1.0, 1.0, 1.0)],
+               'green' : [(0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0)],
+               'blue' : [(0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)]}
+    redscale = color.LinearSegmentedColormap('redscale', reddict)
+    return redscale    
+
+def make_red_alpha_scale_cm():
+    redalphadict = {'red' : [(0.0, 0.0, 0.0),
+                        (1.0, 1.0, 1.0)],
+               'green' : [(0.0, 0.0, 0.0),
+                          (1.0, 0.0, 0.0)],
+               'blue' : [(0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)],
+               'alpha' : [(0.0, 0.0, 0.0),
+                          (0.5, 0.0, 0.0),
+                          (1.0, 1.0, 1.0)]}
+    redalphascale = color.LinearSegmentedColormap('redalphascale', redalphadict)
+    return redalphascale    
+
+def make_greenscale_cm():
+    reddict = {'red' : [(0.0, 0.0, 0.0),
+                        (1.0, 0.0, 0.0)],
+               'green' : [(0.0, 0.0, 0.0),
+                          (1.0, 1.0, 1.0)],
+               'blue' : [(0.0, 0.0, 0.0),
+                         (1.0, 0.0, 0.0)]}
+    greenscale = color.LinearSegmentedColormap('greenscale', reddict)
+    return greenscale
 
 def make_disp_probes(probesize, thetas):
     probe = proc.make_probe(probesize)
@@ -409,22 +442,138 @@ def make_locate_gui(pre, post, offset):
 
     return offset[0]
 
-def make_redscale_cm():
-    reddict = {'red' : [(0.0, 0.0, 0.0),
-                        (1.0, 1.0, 1.0)],
-               'green' : [(0.0, 0.0, 0.0),
-                          (1.0, 0.0, 0.0)],
-               'blue' : [(0.0, 0.0, 0.0),
-                         (1.0, 0.0, 0.0)]}
-    redscale = color.LinearSegmentedColormap('redscale', reddict)
-    return redscale    
+def make_thresh_setter(prof, low, up, mask, section, buff, smooth):
 
-def make_greenscale_cm():
-    reddict = {'red' : [(0.0, 0.0, 0.0),
-                        (1.0, 0.0, 0.0)],
-               'green' : [(0.0, 0.0, 0.0),
-                          (1.0, 1.0, 1.0)],
-               'blue' : [(0.0, 0.0, 0.0),
-                         (1.0, 0.0, 0.0)]}
-    greenscale = color.LinearSegmentedColormap('greenscale', reddict)
-    return greenscale
+    sect_mean = section.mean()
+    sect_std = section.std()
+
+    renormed = [False]
+    recalc = [True]
+    on = [True]
+
+    def coord_to_extent(p, y, x):
+        return [x, x + p.shape[1],
+                y + p.shape[0], y]
+
+    def renorm_data():
+        if renormed[0]:
+            prof[0] = ((prof[0] * sect_std) / sect_mean)
+            renormed[0] = False
+        else:
+            prof[0] = ((prof[0] * sect_mean) / sect_std)
+            renormed[0] = True
+
+        update_display(force_recalc=True)
+
+    def recalc_prof():
+        print 'recalc'
+        dam_re, line_re, smooth_re = analysis.profile(prof[0], thresh=low[0], 
+                                                      upper=up[0], smooth=smooth)
+        dam[0] = dam_re
+        smoothed[0] = smooth_re
+        line[0] = line_re
+        last_low[0] = low[0]; last_up[0] = up[0]
+
+    def adjust_threshs(low_delt, up_delt):
+        print 'adjust'
+        print low_delt, up_delt
+        low[0] += low_delt
+        up[0] += up_delt
+        
+        update_display()
+
+    def update_display(force_recalc=False): 
+        print 'update'
+        print last_low, low, last_up, up
+        diff = (last_low[0] != low[0] or last_up[0] != up[0])
+
+        diffd = '*' if diff else ''
+
+        if (recalc[0] and diffd) or force_recalc:
+            recalc_prof()
+        
+        print last_low, low, last_up, up
+        print 'finish update'
+        profile_graph.clear()
+        profile_graph.plot(smoothed[0])
+        profile_graph.axhline(low[0], color='r')
+        profile_graph.axhline(up[0], color='g')
+        
+        profile_graph.set_title('vessels: '+str(dam[0]))
+        section_map.set_title('lower thresh: '+str(low[0])+' | '
+                              'upper thresh: '+str(up[0])+' | '
+                              'renormed: '+str(renormed[0])+' | '
+                              'constant recalc: '+str(recalc[0])+diffd)
+        print 'reset titles'
+        plt.draw()
+                              
+    def toggle_recalc():
+        recalc[0] = not recalc[0]
+        update_display()    
+
+    def key_press(event):
+        print 'key press'
+        print event.key
+        if event.key == 'j' or event.key == 'J' or event.key == 'left':
+            adjust_threshs(0, -.1)
+        elif event.key == 'l' or event.key == 'L' or event.key == 'right':
+            adjust_threshs(0, .1)
+        elif event.key == 'i' or event.key == 'I' or event.key == 'up':
+            adjust_threshs(.1, 0)
+        elif event.key == 'k' or event.key == 'K' or event.key == 'down':
+            adjust_threshs(-.1, 0)
+        elif event.key == 'r' or event.key == 'R':
+            renorm_data()
+        elif event.key in ['c', 'C']:
+            toggle_recalc()
+        elif event.key in ['space']:
+            update_display(force_recalc=True)
+        elif event.key == 'enter':
+            plt.close(fig)
+        elif event.key in ['escape']:
+            on[0] = False
+            plt.close(fig)       
+
+
+    prof = [prof]
+
+    dam, line, smoothed = analysis.profile(prof[0], thresh=low, upper=up, 
+                                           smooth=smooth)
+
+    low = [low]; up = [up]; smoothed = [smoothed]; dam = [dam]; line = [line]
+    last_low = [low[0]]; last_up = [up[0]]
+
+    fig = plt.figure(1)
+    fig.canvas.mpl_connect('key_press_event', key_press)
+    
+    gs = gspec.GridSpec(6, 6)
+
+    section_map = fig.add_subplot(gs[:4, :])
+    section_map.imshow(section, 'gray', interpolation='none')
+
+    r_alpha_cm = make_red_alpha_scale_cm()
+    if min(mask.shape) > 1:
+        section_map.imshow(mask, r_alpha_cm, interpolation='none', 
+                           extent=coord_to_extent(mask, buff, buff),
+                           alpha=0.5)
+    else:
+        section_map.imshow(mask,  interpolation='none', 
+                           extent=coord_to_extent(mask, buff, buff),
+                           alpha=0.5)
+        
+    section_map.set_xlim(0, section.shape[1])
+    section_map.set_ylim(0, section.shape[0])
+    
+    profile_graph = fig.add_subplot(gs[5:, :])
+    profile_graph.plot(smoothed[0])
+    profile_graph.axhline(low[0], color='r')
+    profile_graph.axhline(up[0], color='g')
+
+    update_display()
+    plt.show()
+    plt.ioff()
+    plt.close()
+    
+    return dam[0], line[0], on[0]
+
+    
