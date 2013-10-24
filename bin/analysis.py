@@ -1,5 +1,5 @@
 
-import sys, csv, time
+import sys, csv, time, re
 import gui
 
 import numpy as np
@@ -11,9 +11,30 @@ from scipy.ndimage import gaussian_filter
 from scipy.stats.mstats import kurtosis
 from scipy.stats import skew
 
+def attempt_meaningful_name(pre, post):
+    psize_re = '-[0-9]{1,4}um-'
+    date_re = '-[0-9]{8}-'
+    ppost_des_re = '-((pre)|(post))-[0-9]{3}'
+    try: 
+        psize = re.search(psize_re, pre).group(0)
+        date = re.search(date_re, pre).group(0)
+        pre_des = re.search(ppost_des_re, pre).group(0)
+        post_des = re.search(ppost_des_re, post).group(0)
+
+        name = 'ZSeries'+date+psize.strip('-')+pre_des+post_des+'.csv'
+
+    except:
+
+        t = time.strftime('%X%x%Z').replace(' ','').replace(':','.')
+        t = t.replace('/','-')
+        
+        name = 'damage'+t+'.csv'
+
+    return name
+    
+
 def print_damage_stats(pre, post, masks):
-    t = time.strftime('%X%x%Z').replace(' ','').replace(':','.').replace('/','-')
-    filename = 'damage'+t+'.csv'
+    filename = attempt_meaningful_name(pre[0], post[0])
     with open(filename, 'wb') as cf:
         writ = csv.writer(cf)
         
