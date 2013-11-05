@@ -85,6 +85,11 @@ def print_tddict(dic, title):
         for l in dic['data']:
             writ.writerow(l)
     
+def decide_thresh(region):
+    
+    lower = 0; upper = 0
+
+    return lower, upper
 
 def profile(p, thresh=-0.7, upper=1.5, smooth=20, peaksize=5):
     dam = 0
@@ -196,14 +201,25 @@ def damage_profiles(stack, locs, rots, psize, args):
             # print mask.shape
 
             my_shape = mask.shape[0]/2.0
+            # these give negative overshoot
+            pre_my_zeros = abs(min(yx[0] - my_shape, 0))
+            post_my_zeros = max((yx[0] + my_shape) - layer.shape[0], 0)
             mx_shape = mask.shape[1]/2.0
+            pre_mx_zeros = abs(min(yx[1] - mx_shape, 0))
+            post_mx_zeros = max((yx[1] + mx_shape) - layer.shape[1], 0)
             myb_shape = mask.shape[0]/2.0 + args.buffer
             mxb_shape = mask.shape[1]/2.0 + args.buffer
-            super_section = rotlayer[yx[0]-myb_shape:yx[0]+myb_shape,
-                                     yx[1]-mxb_shape:yx[1]+mxb_shape]
-            section = super_section[args.buffer:-args.buffer,
-                                    args.buffer:-args.buffer]
-            dat = mask * section
+            super_section = rotlayer[max(0, yx[0]-myb_shape):yx[0]+myb_shape,
+                                     max(0, yx[1]-mxb_shape):yx[1]+mxb_shape]
+            section = rotlayer[max(yx[0]-my_shape, 0):yx[0]+my_shape,
+                               max(yx[1]-mx_shape, 0):yx[1]+mx_shape]
+
+            print yx[0]-myb_shape, yx[0]+myb_shape
+            print yx[1]-mxb_shape, yx[1]+mxb_shape
+            print pre_my_zeros, post_my_zeros, pre_mx_zeros, post_mx_zeros
+            print section.shape, super_section.shape
+            dat = apply_mask(mask, section, [pre_my_zeros, post_my_zeros],
+                             [pre_mx_zeros, post_mx_zeros])
             prof = collapse_rect_mask(dat)
         
             count[i,j], lines[i,j], onsm = profile(prof, thresh=thresh, 

@@ -3,7 +3,7 @@ import numpy as np
 
 from numpy.fft import fftn, ifftn, fft2, ifft2
 from scipy.signal import fftconvolve
-from proc import normalize
+from proc import normalize, pad_to_size_of, pad_by
 
 def nccfft(s, p, room, fact=1):
     """Used for all Patterns that do not fall other categories.
@@ -74,62 +74,3 @@ def nccfft2(s, p):
 
     return np.where(prob == prob.max())
 
-def pad_zeroes(m, axis, thick, side='post'):
-    """Pads given matrix with zeros. 
-
-    Pads m with thick zeros on axis. 
-
-    ----------
-    m : ndarray
-       Matrix to be padded.
-
-    axis : int
-       Axis of m to be padded.
-
-    thick : int
-       Number of zeros to pad with.
-
-    ----------
-    out1 : ndarray
-       Simply m, padded with given number of zeros on given axis.
-    """
-
-    if axis == 1:
-        rows = m.shape[0]
-        cols = thick
-    elif axis == 0:
-        rows = thick
-        cols = m.shape[1]
-
-    if side == 'pre':
-        con = (np.zeros((rows, cols)), m)
-    elif side == 'post':
-        con = (m, np.zeros((rows, cols)))
-    elif side == 'both':
-        con = (np.zeros((rows, cols)), m, np.zeros((rows, cols)))
-        
-    return np.concatenate(con, axis)
-
-# pad a to size of b, with zeroes
-def pad_to_size_of(a, b):
-    """Pads first matrix to the size of second matrix.
-
-    Uses zeros to pad first matrix to size of second matrix.
-    Will fail if first matrix is larger than second. 
-
-    ----------
-    a, b : ndarray
-
-    ----------
-    out : ndarray
-       Original first array padded with zeros s.t it is
-       now the size of b. 
-    """
-
-    a2 = pad_zeroes(a, 0, b.shape[0] - a.shape[0])
-    return pad_zeroes(a2, 1, b.shape[1] - a.shape[1])
-
-def pad_by(a, factor):
-    a2 = pad_zeroes(a, 0, a.shape[0] / factor, 'both')
-    return pad_zeroes(a2, 1, a.shape[1] / factor, 'both')
-                 

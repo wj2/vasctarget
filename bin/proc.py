@@ -42,6 +42,15 @@ def rotate_mask_horizontal(arr, rot, loc):
     
     return rotted, np.array((y2, x2))
     
+def apply_mask(mask, sect, ybuffs, xbuffs):
+    sect = pad_zeroes(sect, 0, ybuffs[0], side='pre')
+    sect = pad_zeroes(sect, 0, ybuffs[1], side='post')
+    sect = pad_zeroes(sect, 1, xbuffs[0], side='pre')
+    sect = pad_zeroes(sect, 1, xbuffs[1], side='post')
+
+    return mask * sect
+    
+
 def collapse_rect_mask(mask):
     if min(mask.shape) < 2 or len(mask.shape) < 2:
         return mask.T[mask.T.nonzero()]
@@ -132,3 +141,63 @@ def smoothg(sig,win_sz=None,ns=3,std=None,window=wgauss,**kargs):
     else:
         assert 0, 'only 1D and 2D data supported'
     return ret
+
+def pad_zeroes(m, axis, thick, side='post'):
+    """Pads given matrix with zeros. 
+
+    Pads m with thick zeros on axis. 
+
+    ----------
+    m : ndarray
+       Matrix to be padded.
+
+    axis : int
+       Axis of m to be padded.
+
+    thick : int
+       Number of zeros to pad with.
+
+    ----------
+    out1 : ndarray
+       m padded with given number of zeros on given axis.
+    """
+
+    if axis == 1:
+        rows = m.shape[0]
+        cols = np.round(thick)
+    elif axis == 0:
+        rows = np.round(thick)
+        cols = m.shape[1]
+
+    if side == 'pre':
+        con = (np.zeros((rows, cols)), m)
+    elif side == 'post':
+        con = (m, np.zeros((rows, cols)))
+    elif side == 'both':
+        con = (np.zeros((rows, cols)), m, np.zeros((rows, cols)))
+        
+    return np.concatenate(con, axis)
+
+# pad a to size of b, with zeroes
+def pad_to_size_of(a, b):
+    """Pads first matrix to the size of second matrix.
+
+    Uses zeros to pad first matrix to size of second matrix.
+    Will fail if first matrix is larger than second. 
+
+    ----------
+    a, b : ndarray
+
+    ----------
+    out : ndarray
+       Original first array padded with zeros s.t it is
+       now the size of b. 
+    """
+
+    a2 = pad_zeroes(a, 0, b.shape[0] - a.shape[0])
+    return pad_zeroes(a2, 1, b.shape[1] - a.shape[1])
+
+def pad_by(a, factor):
+    a2 = pad_zeroes(a, 0, a.shape[0] / factor, 'both')
+    return pad_zeroes(a2, 1, a.shape[1] / factor, 'both')
+                 
