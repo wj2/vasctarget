@@ -38,6 +38,9 @@ if __name__ == '__main__':
                                    args.downsample,
                                    args.gaussian,
                                    probesize)
+    analysis.save_damage(args.path, views['line_notreduced'], args, 
+                         probesize)
+    
 
     analysis.print_misc_stats(args.path, views, 'line')
     if args.gaussian:

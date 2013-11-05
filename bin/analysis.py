@@ -1,5 +1,5 @@
 
-import sys, csv, time, re
+import sys, csv, time, re, os
 import gui
 
 import numpy as np
@@ -32,6 +32,18 @@ def attempt_meaningful_name(pre, post):
 
     return name
     
+def save_damage(data_name, data, args, psize):
+    name = data_name.split('/')
+    if name[-1] == '':
+        name = name[-2]
+    else:
+        name = name[-1]
+    name = os.path.splitext(name)[0]+'-damage.npz'
+    file_ = open(name, 'wb')
+    np.savez(file_, damage=data, lw=np.array(psize),
+             context=np.array((args.downsample, 
+                               args.z_thickness,
+                               args.channel)))
 
 def print_damage_stats(pre, post, masks):
     filename = attempt_meaningful_name(pre[0], post[0])
@@ -103,7 +115,8 @@ def line_profiles(views, stack, thetas, down, gauss, probesize):
     probe[l / 2] = 1
     
     # create container for damage map
-    damage = np.zeros((len(thetas), 
+    damage = np.zeros((stack.shape[0],
+                       len(thetas), 
                        (stack.shape[1] - l) / down + 1,
                        (stack.shape[2] - l) / down + 1))
     # container for individual line profiles
@@ -130,15 +143,17 @@ def line_profiles(views, stack, thetas, down, gauss, probesize):
                     p = p.T[p.T.nonzero()]
 
                     dam, line, onsm = profile(p)
-                    damage[i, ys, xs] += dam
+                    damage[lnum, i, ys, xs] = dam
                     lineprofiles[lnum, i, ys, xs] = line
                     xs += 1
                 ys += 1
 
-    views['line'] = damage
+    views['line'] = damage.sum(axis=0)
+    views['line_notreduced'] = damage
     views['lineprof'] = lineprofiles
+    # save damage data 
     if gauss:
-        smoothdamage = gaussian_filter(damage, 1)
+        smoothdamage = gaussian_filter(views['line'], 1)
         views['linegauss'] = np.ceil(smoothdamage)
     return views
 
