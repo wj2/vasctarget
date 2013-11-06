@@ -6,7 +6,7 @@ import numpy as np
 
 from proc import *
 from scipy.misc import imrotate
-from scipy.signal import argrelmax
+from scipy.signal import argrelmax, find_peaks_cwt
 from scipy.ndimage import gaussian_filter
 from scipy.stats.mstats import kurtosis
 from scipy.stats import skew
@@ -111,6 +111,15 @@ def profile(p, thresh=-0.7, upper=1.5, smooth=20, peaksize=5):
     dam += argrelmax(p, order=peaksize)[0].size
 
     return dam, p, smooth_only
+
+def profile_cwt(p, sizes=[10]):
+    
+    peaks = find_peaks_cwt(p, np.array(sizes))
+
+    print 'peaks: '+str(peaks)
+    return len(peaks), p, p
+    
+    
         
 def line_profiles(views, stack, thetas, down, gauss, probesize):
     # avoid big top level vessels, how to do it visually
@@ -221,9 +230,12 @@ def damage_profiles(stack, locs, rots, psize, args):
             dat = apply_mask(mask, section, [pre_my_zeros, post_my_zeros],
                              [pre_mx_zeros, post_mx_zeros])
             prof = collapse_rect_mask(dat)
+            thresh = super_section.mean()
+            upper = thresh + super_section.std()
         
             count[i,j], lines[i,j], onsm = profile(prof, thresh=thresh, 
                                                    upper=upper, smooth=sm)
+            
             if args.manual:
                 results = gui.make_thresh_setter(prof, thresh, upper, mask, 
                                                  super_section, args.buffer, sm)
