@@ -94,6 +94,8 @@ def decide_thresh(region):
 def profile(p, thresh=-0.7, upper=1.5, smooth=20, peaksize=5):
     dam = 0
     
+    if p.size < smooth: 
+        smooth = p.size
     smooth_only = smoothg(p, smooth) # smooth 
     p = smooth_only
     # if whole luminance is high (eg, on a vessel)
